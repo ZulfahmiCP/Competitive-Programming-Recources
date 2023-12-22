@@ -1,0 +1,18 @@
+[A] Secret Sport
+Karena Permainan akan segera berhenti jika pemain A telah mencapai X poin atau B telah mencapai Y poin. 
+Maka dengan kata lain orang terakhir yang mencetak poin lah yang menang. 
+
+[B] Two Out Of three
+Pertama inisialisasikan ANS = 2. Buat juga sebuah array B berukuran N yang semuanya berisi 1.
+Jadikan array A berisi pair<int, int> yang dimana A = {a, i}, lalu urutkan secara menaik.
+Kemudian kita cek apakah A[i] adalah bilangan pertama, jika A[i].first sama dengan A[i - 1].first 
+dan A[i].first tidak sama dengan A[i + 1].first, dengan kata lain frekuensi dari A[i].first lebih dari 1
+dan A[i] merupakan angka terakhir dari barisan tersebut. Jika ada, set B[A[i].Y] = ans, kemudian 
+tambahkan ans++. Hentikan fornya jika ans sudah bernilai 4. 
+
+Jika ans == 4, maka tidak ada jawaban, selain itu keluarkan array B.
+
+[C] Anonymous Informant
+
+Jika x dipilih sebagai bilangan yang akan dishift, maka setelah itu, A[x] akan berada pada ujung belakang. 
+Sehingga bergerak x langkah ke kiri, jika sudah lewat, maka kembali ke kanan. 

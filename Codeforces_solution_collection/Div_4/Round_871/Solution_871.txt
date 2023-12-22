@@ -1,0 +1,5 @@
+[G] Hits Different
+Jika kita bentuk kalengnya seperti diamond, maka akan terbentuk sebuah kotak, sehingga kita dapat
+membuat DP 2 dimensi yang dimana 
+            dp[i][j] = dp[i - 1][j] + dp[i][j - 1] - dp[i - 1][j - 1] + cur * cur
+Yang dimana cur = cur = val(i - 1) + 1 + val(i + j - 1) - val(i) dan val(x) = x*(x + 1)/2
