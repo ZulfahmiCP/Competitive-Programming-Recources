@@ -3,11 +3,13 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
+#include <assert.h>
 #include <iomanip>
 #include <cstring>
 #include <numeric>
 #include <vector>
 #include <string>
+#include <bitset>
 #include <array>
 #include <cmath>
 #include <queue>
@@ -48,54 +50,23 @@ template <typename T>
  
 void FastIO();
 void FreeOpen();
-void UsacoOpen();
+
 int main(){
  
     FastIO();
-    ll t,n,k,pos; cin >> t;
-    string s,ans;
-
-    auto find_pair = [&](ll x) -> void {
-        ll cur(0);
-        for(int i = n; i > 0; i--){
-            if(cur + i >= x){
-                k = i, pos -= cur;
-                return;
-            }
-
-            cur += i;
-        }
-
-        k = 1, pos -= cur;
-    };
-
+    int t,n; cin >> t;
+    ll ans;
     while(t--){
-        cin >> s >> pos;
-        n = s.size(), ans = "";
-        vector<bool> erased(n, 0);
-        vector<pair<char, int>> A(n);
+        cin >> n;
+        vector<int> A(n);
 
-        for(int i = 0; i < n; i++)
-            A[i] = {s[i], i};
-        
-        sort(all(A), [&](pair<char, int> &a, pair<char, int> &b) {
-            return (a.X == b.X ? a.X < b.Y : a.X > b.X);
-        });
+        for(int &a : A)
+            cin >> a;
 
-        find_pair(pos);
-        for(int i = 0; i < n - k; i++)
-            erased[A[i].Y] = 1;
-        for(int i = 0; i < n; i++)
-            if(!erased[i])
-                ans += s[i];
-        
-        if(s == "pbdtm"){
-            // pdbtm pdbm
-            Debug(k, pos, ans);
-            Debug(erased);
-        }
-        
-        cout << ans[pos - 1];
+        ans = 0;
+        for(int i = 1; i < n; i++)
+            ans += max(0, A[i] - A[i - 1]);
+        cout << ans + A[0] - 1 << '\n';
     }
 
     return 0;
