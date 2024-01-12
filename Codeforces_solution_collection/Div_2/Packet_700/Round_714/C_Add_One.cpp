@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +59,39 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int t,n,m,ans,mx(2e5),M(1e9 + 7); cin >> t;
+    vector<vector<int>> cnt(mx + 1, vector<int>(10, 0));
+    vector<int> len(mx + 1, 0);
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    cnt[0][9] = len[0] = 1;
+    for(int i = 1, temp; i <= mx; i++){
+        for(int j = 9; j > 0; j--)
+            cnt[i][j] = cnt[i - 1][j - 1];
+        cnt[i][0] = cnt[i - 1][9];
+        cnt[i][1] = (cnt[i][1] + cnt[i - 1][9]) % M; 
+
+        for(int j = 0; j < 10; j++)
+            len[i] = (len[i] + cnt[i][j]) % M;
+    }
+
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        cin >> n >> m;
+        ans = 0;
+        for(int digit; n > 0; n /= 10){
+            digit = 9 - n % 10;
+            if(digit <= m)
+                ans = (ans + len[m - digit]) % M;
+            else
+                ans++;
         }
 
-        cout << '\n';
+        cout << ans << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

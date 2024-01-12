@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +59,66 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,m,total,ans; cin >> t;
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+        cin >> n >> m;
+        vector<vector<bool>> A(n, vector<bool>(m));
+        vector<int> sum(n, 0);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
+        for(int i = 0; i < n; i++)
+            for(int j = 0, a; j < m; j++){
+                cin >> a;
+                A[i][j] = a;
+                sum[i] += a;
             }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+
+        total = accumulate(all(sum), 0);
+        if(total % n){
+            cout << "-1\n";
+            continue;
         }
 
-        cout << '\n';
+        vector<int> index(n);
+        iota(all(index), 0);
+
+        sort(all(index), [&](int &a, int &b) {
+            return sum[a] > sum[b];
+        });
+
+        vector<tuple<int, int, int>> op;
+        total /= n, ans = 0;
+        for(int i = 0, j = n - 1; i < j;){
+            while(i < j && sum[index[i]] == total)
+                i++;
+            while(i < j && sum[index[j]] == total)
+                j--;
+
+            if(i >= j)
+                break;
+            
+            for(int k = 0; k < m; k++){
+                if(sum[index[i]] == total || sum[index[j]] == total)
+                    break;
+
+                if(!A[index[i]][k] || A[index[j]][k])
+                    continue;
+
+                A[index[i]][k] = 0, A[index[j]][k] = 1;
+                sum[index[i]]--, sum[index[j]]++;
+                op.pb({index[i] + 1, index[j] + 1, k + 1});
+                ans++;
+            }
+        }
+
+        cout << ans << '\n';
+        for(auto &[x, y, z] : op)
+            cout << x << ' ' << y << ' ' << z << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

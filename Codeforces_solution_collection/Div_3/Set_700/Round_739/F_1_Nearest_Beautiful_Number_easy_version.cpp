@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,34 +59,53 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int t,n,k,len,mx(1e9); cin >> t;
+    vector<int> k1_beautiful, k2_beautiful;
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    function<void(int, int, vector<int>)> gen_beautiful_num = 
+    [&](int x, int cnt, vector<int> digit) -> void {
+        if(digit.size() == 1)
+            k1_beautiful.pb(x);
+        k2_beautiful.pb(x);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+        if(cnt == 9)
+            return;
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
+        x *= 10;
+        if(digit.size() == 1){
+            for(int i = 0; i < 10; i++){
+                if(i != digit[0])
+                    digit.pb(i);
+
+                gen_beautiful_num(x + i, cnt + 1, digit);
+                
+                if(i != digit[0])
+                    digit.ppb();
             }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        } else {
+            gen_beautiful_num(x + digit[0], cnt + 1, digit);
+            gen_beautiful_num(x + digit[1], cnt + 1, digit);
         }
+    };
 
-        cout << '\n';
+    for(int i = 1; i < 10; i++)
+        gen_beautiful_num(i, 1, {i});
+    
+    k1_beautiful.pb(1111111111);
+    k2_beautiful.pb(1111111111);
+    k2_beautiful.pb(1e9);
+
+    sort(all(k1_beautiful));
+    sort(all(k2_beautiful));
+
+
+    while(t--){
+        cin >> n >> k;
+
+        if(k == 1)
+            cout << *lower_bound(all(k1_beautiful), n) << '\n';
+        else 
+            cout << *lower_bound(all(k2_beautiful), n) << '\n';
     }
 
     return 0;

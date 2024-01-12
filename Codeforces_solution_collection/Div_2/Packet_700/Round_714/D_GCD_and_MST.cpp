@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +59,45 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,p; cin >> t;
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+        cin >> n >> p;
+        vector<int> A(n), weight(n - 1, p);
+        vector<pair<int, int>> B(n);
+        vector<bool> visited(n, 0);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        for(int i = 0; i < n; i++){
+            cin >> A[i];
+            B[i] = {A[i], i};
         }
 
-        cout << '\n';
+        sort(all(B));
+
+        for(auto &[val, node] : B){
+            if(visited[node])
+                continue;
+            
+            int l = node, r = node;
+            while(l > 0 && A[l - 1] % val == 0)
+                l--;
+            while(r < n - 1 && A[r + 1] % val == 0)
+                r++;
+
+            for(int i = l; i < r; i++){
+                weight[i] = min(weight[i], val);
+                visited[i] = 1;
+            }
+            
+            visited[r] = 1;
+        }
+
+        cout << accumulate(all(weight), 0LL) << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

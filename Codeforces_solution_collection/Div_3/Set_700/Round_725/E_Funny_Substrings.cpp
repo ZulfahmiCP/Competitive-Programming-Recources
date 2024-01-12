@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -59,37 +57,48 @@ template <typename T>
 void FastIO();
 void FreeOpen();
 
+int count(string s) {
+    int cnt = 0, n = s.size();
+    for(int i = 0; i <= n - 4; i++)
+        cnt += s.substr(i, 4) == "haha";
+    return cnt;
+}
+
+int count(string s, string t) {
+    return count(s + t) - count(s) - count(t);
+}
+
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n; cin >> t;
+    string s,op,a,b;
     while(t--){
         cin >> n;
-        vector<bool> used(m, 0);
+        map<string, string> pref, suff;
+        map<string, ll> cnt;
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+        for(int i = 0, m; i < n; i++){
+            cin >> s >> op;
+            if(op == ":="){
+                cin >> a;
+                pref[s] = suff[s] = a;
+                cnt[s] = count(a);
+                continue;
+            } 
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+            cin >> a >> op >> b;
+            cnt[s] = cnt[a] + cnt[b] + count(suff[a], pref[b]);
+
+            a = pref[a] + suff[b], m = a.size();
+            if(m > 3){
+                pref[s] = a.substr(0, 3);
+                suff[s] = a.substr(m - 3, 3);
+            } else 
+                pref[s] = suff[s] = a;
         }
 
-        cout << '\n';
+        cout << cnt[s] << '\n';
     }
 
     return 0;

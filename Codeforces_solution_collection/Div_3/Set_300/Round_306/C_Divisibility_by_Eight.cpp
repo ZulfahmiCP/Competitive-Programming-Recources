@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +59,45 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
+    string s; cin >> s;
+    int n = s.size(); 
     
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
+    for(int i = s[0] == '0', cur; i < n; i++)
+        for(int j = i + 1; j < n; j++)
+            for(int k = j + 1; k < n; k++){
+                cur = 100 * (s[i] - '0') + 10 * (s[j] - '0') + (s[k] - '0');
+                if(cur % 8)
                     continue;
-                cnt--;
+                    
+                cout << "YES\n";
+                cout << s.substr(0, i) << s[i] << s[j] << s[k] << '\n';
+                return 0;
             }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+
+    for(int i = 0, cur; i < n; i++)
+        for(int j = i + 1; j < n; j++){
+            cur = 10 * (s[i] - '0') + (s[j] - '0');
+            if(cur % 8)
+                continue;
+
+            cout << "YES\n";
+            if(s[i] != '0') cout << s[i];
+            cout << s[j] << '\n';
+            return 0;
+        }
+    
+    for(int i = 0; i < n; i++)
+        if(s[i] == '0' || s[i] == '8'){
+            cout << "YES\n" << s[i] << '\n';
+            return 0;
         }
 
-        cout << '\n';
-    }
+    cout << "NO\n";
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

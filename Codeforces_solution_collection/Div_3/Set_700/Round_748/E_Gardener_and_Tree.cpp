@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +60,51 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,k; cin >> t;
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+        cin >> n >> k;
+        vector<vector<int>> adjList(n);
+        vector<int> degree(n, 0);
+        vector<bool> trim(n, 0);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        for(int i = 1, u,v; i < n; i++){
+            cin >> u >> v;
+            u--, v--;
+            degree[u]++;
+            degree[v]++;
+            adjList[u].pb(v);
+            adjList[v].pb(u);
         }
 
-        cout << '\n';
+        queue<int> A;
+        for(int i = 0; i < n; i++)
+            if(degree[i] < 2)
+                A.push(i);
+        
+        for(int node, q; !A.empty() && k--;){
+            q = A.size();
+            for(int i = 0; i < q; i++){
+                node = A.front();
+                A.pop();
+
+                trim[node] = 1;
+
+                for(int &adjNode : adjList[node]){
+                    if(trim[adjNode])
+                        continue;
+                    if((--degree[adjNode]) < 2)
+                        A.push(adjNode);
+                }
+            }
+        }
+
+        cout << n - accumulate(all(trim), 0) << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

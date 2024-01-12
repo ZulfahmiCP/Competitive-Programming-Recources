@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +53,60 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,ans; cin >> t;
     while(t--){
         cin >> n;
-        vector<bool> used(m, 0);
+        vector<int> A, B;
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+        for(int i = 0, x; i < n; i++){
+            cin >> x;
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
+            if(!i){
+                A.pb(x);
+                continue;
             }
             
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
+            if(B.empty()){
+                if(A.back() >= x)
+                    A.pb(x);
+                else 
+                    B.pb(x);
+                continue;
+            }
 
-        cout << '\n';
+            if(A.back() < x && B.back() < x)
+                A.back() < B.back() ? A.pb(x) : B.pb(x);
+            else if(A.back() >= x && B.back() >= x)
+                A.back() < B.back() ? A.pb(x) : B.pb(x);
+            else if(A.back() >= x)
+                A.pb(x);
+            else    
+                B.pb(x);
+        }   
+
+        ans = 0;
+        for(int i = 0; i < (int)A.size() - 1; i++)
+            ans += A[i + 1] > A[i];
+        for(int i = 0; i < (int)B.size() - 1; i++)
+            ans += B[i + 1] > B[i];
+
+        cout << ans << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

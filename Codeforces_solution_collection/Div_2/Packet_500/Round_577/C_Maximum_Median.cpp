@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +52,47 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int n,k,m,ans; cin >> n >> k;
+    vector<int> A(n);
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    for(int &a : A)
+        cin >> a;
+    sort(all(A));
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+    m = n / 2, ans = A[m];
+  
+    for(int i = m; i < n - 1; i++){
+        while(i + 1 < n && A[i] == A[i + 1])
+            i++;
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        if(i == n - 1)
+            break;
+
+        if(1LL * (i - m + 1) * (A[i + 1] - A[i]) > k){
+            cout << ans + k / (i - m + 1) << '\n';
+            return 0;
         }
 
-        cout << '\n';
+        k -= (i - m + 1) * (A[i + 1] - A[i]);
+        ans = A[i + 1];
     }
+
+    cout << ans + k / (m + 1) << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +52,58 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
+
+const int mx = 1.5e7;
+vector<int> mind(mx + 1, -1);
+
+vector<int> getPrimeDiv(int n) {
+    vector<int> prime_div;
+
+    while(n > 1){
+        if(prime_div.empty() || prime_div.back() != mind[n])
+            prime_div.pb(mind[n]);
+        n /= mind[n];
+    }
+
+    return prime_div;
+}
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int n; cin >> n;
+    vector<int> A(n), occ(mx + 1, 0);
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+    int g = 0;
+    for(int &a : A){
+        cin >> a;
+        g = gcd(a, g);
     }
+
+
+    mind[1] = 1;
+    for(int i = 2; i <= mx; i++) if(mind[i] == -1)
+        for(int j = i; j <= mx; j += i)
+            if(mind[j] == -1)
+                mind[j] = i;
+
+    for(int &a : A)
+        for(int &d : getPrimeDiv(a / g))
+            occ[d]++;
+
+    int ans = *max_element(all(occ));
+    cout << (ans ? n - ans : -1) << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }
@@ -104,4 +112,4 @@ template <typename... Args> void debug(Args... args){ cerr << "[";  printDbg(arg
 template <typename K, typename V> void debug(const map<K, V>& container){ cerr << '['; bool comma = 0; for(auto [k, v] : container){ if(comma) cerr << ", "; cerr << '['; printDbg(k); cerr << ", "; printDbg(v); cerr << ']'; comma = 1; } cerr << "]\n"; }
 template <typename T> void debug(const set<T>& container) { cerr << '['; bool comma = 0; for (const auto& st : container) { if (comma) cerr << ", "; printDbg(st); comma = 1; } cerr << "]\n";}
 template <typename T> void debug(const vector<T>& container) { cerr << '['; bool comma = 0; for (const auto& v : container){ if(comma) cerr << ", "; printDbg(v); comma = 1; } cerr << "]\n"; }
-template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); }
+template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); cerr << '\n';}

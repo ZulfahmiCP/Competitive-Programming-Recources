@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -59,43 +57,51 @@ template <typename T>
 void FastIO();
 void FreeOpen();
 
+int getLen(int x) {
+    int len = 0;
+    while(x > 0){
+        len++;
+        x /= 10;
+    }
+
+    return len;
+}
+
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int t,n,mx(1e5); cin >> t;
+    vector<int> len(mx), block(mx, 0);
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    for(int i = 1; i < mx; i++){
+        len[i] = getLen(i);
+        block[i] = block[i - 1] + len[i];
+    }
+
     while(t--){
         cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
+        for(int i = 1; i < mx; i++){
+            if(block[i] < n){
+                n -= block[i];
+                continue;
             }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
 
-        cout << '\n';
+            for(int j = 1; j < mx; j++){
+                if(len[j] >= n){
+                    cout << to_string(j)[n - 1] << '\n';
+                    break;
+                }
+                n -= len[j];
+            }
+
+            break;
+        }
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

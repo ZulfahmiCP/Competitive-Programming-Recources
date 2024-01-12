@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +59,31 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int n,l,r,x,ans(0); cin >> n >> l >> r >> x;
+    vector<int> A(n);
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
+    for(int &a : A)
+        cin >> a;
+    sort(all(A));
     
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    for(int i = 2, m, sum; i < (1 << n); i++){
+        vector<int> prob;
+        for(int j = 0; j < n; j++)
+            if(i & (1 << j))
+                prob.pb(A[j]);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+        m = prob.size();
+        sum = accumulate(all(prob), 0);
+        if(m > 1 && prob[m - 1] - prob[0] >= x && l <= sum && sum <= r)
+            ans++;
     }
+
+    cout << ans << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

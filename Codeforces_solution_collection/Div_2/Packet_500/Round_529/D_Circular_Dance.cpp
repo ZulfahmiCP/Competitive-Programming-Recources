@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -21,8 +18,8 @@
 #include <deque>
 #include <set>
 #include <map>
-#define X first 
-#define Y second 
+#define fi first 
+#define se second 
 #define Int int64_t
 #define pb push_back
 #define pf push_front
@@ -55,47 +52,49 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+    int n; cin >> n;
+    vector<pair<int, int>> next(n);
+ 
+    for(int i = 0, a,b; i < n; i++){
+        cin >> a >> b;
+        next[i] = {a - 1, b - 1};
     }
+    
+    vector<int> order;
+    vector<bool> visited(n, 0);
+ 
+    int cur(0);
+    while(order.size() < n){
+        if(!visited[cur])
+            order.pb(cur + 1);
+        visited[cur] = 1;
+ 
+        auto [a, b] = next[cur];
+        if((next[a].fi == b || next[a].se == b) && (next[b].fi == a || next[b].se == a))
+            cur = (visited[a] ? b : a);
+        else if(next[a].fi == b || next[a].se == b)
+            cur = a;
+        else 
+            cur = b;
+    }
+ 
+    for(int i = 0; i < n; i++)
+        cout << order[i] << " \n"[i == n - 1];
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }
@@ -104,4 +103,4 @@ template <typename... Args> void debug(Args... args){ cerr << "[";  printDbg(arg
 template <typename K, typename V> void debug(const map<K, V>& container){ cerr << '['; bool comma = 0; for(auto [k, v] : container){ if(comma) cerr << ", "; cerr << '['; printDbg(k); cerr << ", "; printDbg(v); cerr << ']'; comma = 1; } cerr << "]\n"; }
 template <typename T> void debug(const set<T>& container) { cerr << '['; bool comma = 0; for (const auto& st : container) { if (comma) cerr << ", "; printDbg(st); comma = 1; } cerr << "]\n";}
 template <typename T> void debug(const vector<T>& container) { cerr << '['; bool comma = 0; for (const auto& v : container){ if(comma) cerr << ", "; printDbg(v); comma = 1; } cerr << "]\n"; }
-template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); }
+template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); cerr << '\n';}

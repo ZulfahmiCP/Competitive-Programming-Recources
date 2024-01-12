@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +53,61 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
+    int t,n,m(10); cin >> t;
     
-    while(t--){
+    auto ans = [&]() -> bool {
         cin >> n;
-        vector<bool> used(m, 0);
+        vector<int> occ(m, 0);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        for(int i = 0, a; i < n; i++){
+            cin >> a;
+            occ[a % 10]++;
         }
 
-        cout << '\n';
-    }
+        for(int i = 0; i < m; i++){
+            if(!occ[i])
+                continue;
+            occ[i]--;
+
+            for(int j = i; j < m; j++){
+                if(!occ[j])
+                    continue;
+                occ[j]--;
+
+                for(int k = j; k < m; k++){
+                    if(!occ[k])
+                        continue;
+                    
+                    if((i + j + k) % 10 == 3)
+                        return 1;
+                }
+
+                occ[j]++;
+            }
+
+            occ[i]++;
+        }
+
+        return 0;
+    };
+
+    while(t--)
+        cout << (ans() ? "YES" : "NO") << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

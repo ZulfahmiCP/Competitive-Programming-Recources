@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,34 +59,25 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n; cin >> t;
+    ll ans,mx;
     while(t--){
         cin >> n;
-        vector<bool> used(m, 0);
+        map<int, int> occ;
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        mx = 0;
+        for(int i = 0, a; i < n; i++){
+            cin >> a;
+            mx = max(mx, (ll)++occ[a]);
         }
 
-        cout << '\n';
+        ans = 0;
+        while(mx < n){
+            ans += min(mx, n - mx) + 1;
+            mx <<= 1;
+        }
+
+        cout << ans << '\n';
     }
 
     return 0;
@@ -105,3 +93,4 @@ template <typename K, typename V> void debug(const map<K, V>& container){ cerr <
 template <typename T> void debug(const set<T>& container) { cerr << '['; bool comma = 0; for (const auto& st : container) { if (comma) cerr << ", "; printDbg(st); comma = 1; } cerr << "]\n";}
 template <typename T> void debug(const vector<T>& container) { cerr << '['; bool comma = 0; for (const auto& v : container){ if(comma) cerr << ", "; printDbg(v); comma = 1; } cerr << "]\n"; }
 template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); }
+

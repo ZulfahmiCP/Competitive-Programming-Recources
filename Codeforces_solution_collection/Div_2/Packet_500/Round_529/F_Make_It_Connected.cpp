@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -21,8 +18,8 @@
 #include <deque>
 #include <set>
 #include <map>
-#define X first 
-#define Y second 
+#define fi first 
+#define se second 
 #define Int int64_t
 #define pb push_back
 #define pf push_front
@@ -55,47 +52,90 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
+
+struct MST {
+    int N;  
+    vector<vector<pair<int, ll>>> adjList;  
+
+    MST(const vector<vector<pair<int, ll>>> &adj){
+        N = adj.size();
+        adjList = adj;
+    }
+
+    ll primMST() {
+        vector<ll> key(N, 9e18);  
+        vector<bool> visited(N, 0); 
+        min_heap<pair<ll, int>> explore;
+
+        explore.push({0, 0});
+        key[0] = 0;
+
+        while(!explore.empty()){
+            auto [weight, node] = explore.top();
+            explore.pop();
+
+            if(visited[node])
+                continue;
+            
+            visited[node] = 1;
+            key[node] = weight;
+
+            for(auto [adjNode, edgeWeight] : adjList[node])
+                if(!visited[adjNode])
+                    explore.push({edgeWeight, adjNode});
+        }
+
+        ll totalWeight = 0;
+        for(int i = 0; i < N; i++){
+            if(!visited[i])
+                return -1;
+            totalWeight += key[i];
+        }
+
+        return totalWeight;
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int n,m,best(0); cin >> n >> m;
+    vector<ll> A(n);
+    vector<vector<pair<int, ll>>> adjList(n);
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+    for(int i = 0; i < n; i++){
+        cin >> A[i];
+        if(A[i] < A[best])
+            best = i;
     }
+
+    for(int i = 0; i < n; i++){
+        if(i == best)
+            continue;
+        adjList[best].pb({i, A[best] + A[i]});
+        adjList[i].pb({best, A[best] + A[i]});
+    }
+
+    for(ll i = 0, u,v,w; i < m; i++){
+        cin >> u >> v >> w;
+        u--, v--;
+        adjList[u].pb({v, w});
+        adjList[v].pb({u, w});
+    }
+
+    MST mst(adjList);
+    cout << mst.primMST() << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }
@@ -104,4 +144,4 @@ template <typename... Args> void debug(Args... args){ cerr << "[";  printDbg(arg
 template <typename K, typename V> void debug(const map<K, V>& container){ cerr << '['; bool comma = 0; for(auto [k, v] : container){ if(comma) cerr << ", "; cerr << '['; printDbg(k); cerr << ", "; printDbg(v); cerr << ']'; comma = 1; } cerr << "]\n"; }
 template <typename T> void debug(const set<T>& container) { cerr << '['; bool comma = 0; for (const auto& st : container) { if (comma) cerr << ", "; printDbg(st); comma = 1; } cerr << "]\n";}
 template <typename T> void debug(const vector<T>& container) { cerr << '['; bool comma = 0; for (const auto& v : container){ if(comma) cerr << ", "; printDbg(v); comma = 1; } cerr << "]\n"; }
-template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); }
+template <typename T> void debug(const vector<vector<T>> &container) { for (const auto &v : container) debug(v); cerr << '\n';}

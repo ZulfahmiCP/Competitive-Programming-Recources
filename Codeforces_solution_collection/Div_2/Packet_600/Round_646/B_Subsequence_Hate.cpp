@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,40 +60,34 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,ans; cin >> t;
+    string s;
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+        cin >> s;
+        n = ans = s.size();
+        vector<vector<int>> pref(n, vector<int>(2, 0)), suff(n, vector<int>(2, 0));
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+        pref[0][0] = s[0] == '0', pref[0][1] = s[0] == '1';
+        for(int i = 1; i < n; i++)
+            for(int j = 0; j < 2; j++)
+                pref[i][j] = pref[i - 1][j] + (s[i] == char(j + '0'));
+        
+        suff[n - 1][0] = s[n - 1] == '0', suff[n - 1][1] = s[n - 1] == '1';
+        for(int i = n - 2; i >= 0; i--)
+            for(int j = 0; j < 2; j++)
+                suff[i][j] = suff[i + 1][j] + (s[i] == char(j + '0'));
+        
+        ans = min(suff[0][0], suff[0][1]);
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < 2; j++)
+                ans = min(ans, (i + 1 - pref[i][j]) + (n - i - 1 - suff[i][!j]));
+        cout << ans << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

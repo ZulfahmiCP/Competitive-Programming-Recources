@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -59,37 +57,32 @@ template <typename T>
 void FastIO();
 void FreeOpen();
 
+vector<int> getDivisors(int n) {
+    vector<int> divisors;
+
+    for(int i = 1; i * i <= n; i++)
+        if(!(n % i)){
+            divisors.pb(i);
+            if(i * i != n)
+                divisors.pb(n / i);
+        }
+    
+    sort(all(divisors));
+    return divisors;
+}
+
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int a,b,n,l,r; cin >> a >> b >> n;
+    vector<int> div = getDivisors(gcd(a, b));
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+    for(int i = 0; i < n; i++){
+        cin >> l >> r;
+        auto ans = upper_bound(all(div), r);
+        if(ans != div.begin())
+            ans--;
+        cout << (*ans >= l ? *ans : -1) << '\n';
     }
 
     return 0;

@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,34 +60,19 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,a,b; cin >> t;
     while(t--){
         cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+ 
+        b = 1;
+        while(b*b < n)
+            b++;
+        a = b - 1;
+ 
+        if(n <= a*a + 1 + (b*b - a*a)/2)
+            cout << (n - a*a) << ' ' << b << '\n';
+        else 
+            cout << b << ' ' << b*b - n + 1 << '\n';
     }
 
     return 0;

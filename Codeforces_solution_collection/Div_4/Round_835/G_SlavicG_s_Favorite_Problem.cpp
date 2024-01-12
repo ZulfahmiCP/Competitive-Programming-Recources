@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +53,59 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
+    int t,n,source,sink; cin >> t;
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        cin >> n >> source >> sink;
+        vector<vector<pair<int, int>>> adjList(n);
+        map<int, bool> exist_xor_sum;
+ 
+        for(int i = 0, u,v,w; i < n - 1; i++){
+            cin >> u >> v >> w;
+            u--, v--;
+            adjList[u].pb({v, w});
+            adjList[v].pb({u, w});
         }
-
-        cout << '\n';
+ 
+        function<bool(int, int, int)> can_go_to = [&](int node, int parent, int xor_sum) -> bool {
+            if(node != sink && exist_xor_sum[xor_sum])
+                return 1;
+            
+            for(auto &[adjNode, weight] : adjList[node])
+                if(adjNode != parent && can_go_to(adjNode, node, weight ^ xor_sum))
+                    return 1;
+            
+            return 0;
+        };
+ 
+        function<void(int, int, int)> find_xor_sum = [&](int node, int parent, int xor_sum) {
+            if(node == sink)
+                return;
+            exist_xor_sum[xor_sum] = 1;
+ 
+            for(auto &[adjNode, weight] : adjList[node])
+                if(adjNode != parent)
+                    find_xor_sum(adjNode, node, weight ^ xor_sum);
+        };  
+ 
+        source--, sink--;
+        find_xor_sum(source, -1, 0);
+        cout << (can_go_to(sink, -1, 0) ? "YES" : "NO") << '\n';
     }
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

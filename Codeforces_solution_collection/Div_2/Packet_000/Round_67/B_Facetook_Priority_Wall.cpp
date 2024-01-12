@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,35 +59,41 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    string user,a,b,op; cin >> user;
+    map<string, int> priority;
+    int n; cin >> n;
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    for(int i = 0, val; i < n; i++){
+        cin >> a >> op;
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+        val = (op == "posted" ? 15 : (op == "commented" ? 10 : 5));
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
+        if(op != "likes")
+            cin >> op;
+        cin >> b >> op;
 
-        cout << '\n';
+        b.ppb(), b.ppb();
+
+        priority[a] += 0;
+        priority[b] += 0;
+
+        if(a == user)
+            priority[b] += val;
+        else if(b == user)
+            priority[a] += val;
     }
+
+    vector<pair<int, string>> val;
+    for(auto &[s, v] : priority)
+        val.pb({v, s});
+    
+    sort(all(val), [&](pair<int, string> &a, pair<int, string> &b) {
+        return a.X == b.X ? a.Y < b.Y : a.X > b.X;
+    });
+
+    for(auto &[v, s] : val)
+        if(s != user)
+            cout << s << '\n';
 
     return 0;
 }

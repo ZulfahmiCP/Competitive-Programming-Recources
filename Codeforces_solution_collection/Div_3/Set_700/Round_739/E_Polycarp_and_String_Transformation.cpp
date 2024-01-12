@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,35 +60,43 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+    int tc,n,m,a; cin >> tc;
+    string s,t,S,T,temp;
+ 
+    auto ans = [&]() -> string {
+        cin >> s;
+        n = s.size(), t = "";
+ 
+        vector<int> occ(26, 0);
+ 
+        for(int i = n - 1; i > -1; i--){
+            if(!occ[s[i] - 'a'])
+                t += s[i];
+            occ[s[i] - 'a']++;
         }
-
-        cout << '\n';
-    }
+ 
+        reverse(all(t));
+        m = t.size(), a = 0;
+        for(int i = 0; i < t.size(); i++){
+            if(occ[t[i] - 'a'] % (i + 1))
+                return "-1";
+            a += (occ[t[i] - 'a'])/(i + 1);
+        }
+ 
+        S = s.substr(0, a), T = "", a = 0, temp = S;
+        while(!temp.empty() && a < n && temp.size() <= s.size()){
+            T += temp;
+            temp.erase(remove_if(all(temp), [&](char c) {
+                return c == t[a];
+            }), temp.end());
+            a++;
+        }
+ 
+        return (s == T ? (S + " " + t) : "-1");
+    };
+ 
+    while(tc--)
+        cout << ans() << '\n';
 
     return 0;
 }

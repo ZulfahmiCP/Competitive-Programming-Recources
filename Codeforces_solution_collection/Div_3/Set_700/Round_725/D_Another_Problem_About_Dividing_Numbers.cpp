@@ -1,6 +1,4 @@
 
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -62,34 +60,33 @@ void FreeOpen();
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
+    int t,a,b,k,d,max_k,min_k; cin >> t;
+ 
+    auto multiple_count = [&](int n) -> int {
+        int N(n), ans(0);
+        for(int i = 2; i*i <= N; i++)
+            if(!(n % i))
+                while(!(n % i))
+                    n /= i, ans++;
+        
+        return (n > 1 ? ans + 1 : ans);
+    };
     
     while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
-
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+        cin >> a >> b >> k;
+ 
+        d = gcd(a, b);
+ 
+        max_k = multiple_count(a) + multiple_count(b);
+ 
+        if(a == b)
+            min_k = 0;
+        else if(a == d || b == d)
+            min_k = 1;
+        else 
+            min_k = 2;
+ 
+        cout << (min_k <= k && k <= max_k && ((k == 1 && min_k == 1) || k != 1) ? "YES\n" : "NO\n");
     }
 
     return 0;

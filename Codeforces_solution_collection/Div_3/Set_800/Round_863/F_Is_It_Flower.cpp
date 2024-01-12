@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +52,123 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
+
+int valid_cycle(int n, int m) {
+    int k = sqrt(n);
+    if(k * k != n || k * (k + 1) != m)
+        return 0;
+    return k;
+}
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
+    int t,n,m,k; cin >> t;
     
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    auto ans = [&]() -> bool {
+        cin >> n >> m;
+        vector<vector<int>> adjList(n);
+        vector<bool> visited(n, 0);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
-
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
+        for(int i = 0, u,v; i < m; i++){
+            cin >> u >> v;
+            u--, v--;
+            adjList[u].pb(v);
+            adjList[v].pb(u);
         }
 
-        cout << '\n';
-    }
+        k = valid_cycle(n, m);
+        if(k < 3)
+            return 0;
+
+        for(int i = 0; i < n; i++)
+            if(adjList[i].size() != 4 && adjList[i].size() != 2)
+                return 0;
+
+        vector<int> center;
+
+        function<bool(int, int)> find_center = [&](int node, int parent) -> bool {
+            center.pb(node);
+            visited[node] = 1;
+
+            int cnt = 0;
+            for(int adjNode : adjList[node])
+                if(adjList[adjNode].size() == 4)
+                    cnt++;
+            
+            if(cnt != 2)
+                return 0;
+
+            for(int adjNode : adjList[node]){
+                if(adjNode == parent || adjList[adjNode].size() == 2)
+                    continue;
+                if(adjNode == center[0]) 
+                    return 1;
+                if(visited[adjNode])
+                    return 0;
+                if(find_center(adjNode, node))
+                    return 1;
+            }
+
+            return 0;
+        };
+
+        for(int i = 0; i < n; i++)
+            if(adjList[i].size() == 4){
+                if(!find_center(i, -1) || center.size() != k)
+                    return 0;
+                break;
+            }
+
+        int cnt;
+
+        function<bool(int, int, int)> other = [&](int index, int node, int parent) -> bool {
+            visited[node] = 1;
+            cnt++;
+
+            for(int adjNode : adjList[node]){
+                if(adjNode == parent)
+                    continue;
+
+                if(adjNode == center[index])
+                    return 1;
+
+                if(adjList[adjNode].size() == 4 || visited[adjNode])
+                    return 0;
+
+                if(!other(index, adjNode, node))
+                    return 0;
+            }
+
+            return 1;
+        };
+
+        for(int i = 0; i < k; i++){
+            cnt = 0;
+            for(int j : adjList[center[i]])
+                if(adjList[j].size() == 2){
+                    if(!other(i, j, center[i]) || cnt != k - 1)
+                        return 0;
+                    break;
+                }
+        }
+
+        return 1;
+    };
+
+    while(t--)
+        cout << (ans() ? "YES" : "NO") << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }

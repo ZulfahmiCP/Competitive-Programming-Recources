@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -59,38 +56,72 @@ template <typename T>
 void FastIO();
 void FreeOpen();
 
+int max_pref(vector<int> &A) {
+    int mx = -2e9, cur = 0;
+    for(int &a : A){
+        cur += a;
+        mx = max(mx, cur);
+    }
+
+    return mx;
+}
+
+int max_suff(vector<int> &A) {
+    int n = A.size(), mx = -2e9, cur = 0;
+    for(int i = n - 1; i >= 0; i--){
+        cur += A[i];
+        mx = max(mx, cur);
+    }
+
+    return mx;
+}
+
+int max_sub(vector<int> &A) {
+    int mx = -2e9, cur = 0;
+    for(int &a : A){
+        cur += a;
+        mx = max(mx, cur);
+        cur = max(cur, 0);
+    }
+
+    return mx;
+}
+
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
+    int n,m; cin >> n >> m;
+    vector<vector<int>> A(n);
+    vector<int> pref(n, 0), suff(n, 0), sum(n);
+    ll ans = -1e18, cur = 0;
 
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
-    
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    for(int i = 0, k; i < n; i++){
+        cin >> k;
+        A[i] = vector<int>(k);
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+        for(int &a : A[i])
+            cin >> a;
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
-                    continue;
-                cnt--;
-            }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
-        }
-
-        cout << '\n';
+        pref[i] = max_pref(A[i]);
+        suff[i] = max_suff(A[i]);
+        sum[i] = accumulate(all(A[i]), 0);
     }
+
+    vector<bool> used(n, 0);
+
+    for(int i = 0, x; i < m; i++){
+        cin >> x, x--;
+
+        used[x] = 1;
+        ans = max(ans, cur + pref[x]);
+        cur = max({0LL, cur + sum[x], (ll)suff[x]});
+    }
+
+    for(int i = 0; i < n; i++)
+        if(used[i])
+            ans = max(ans, (ll)max_sub(A[i]));
+
+    cout << ans << '\n';
 
     return 0;
 }

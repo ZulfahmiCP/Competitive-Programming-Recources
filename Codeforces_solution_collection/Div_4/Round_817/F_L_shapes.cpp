@@ -1,6 +1,3 @@
-
-
-
 #include <iostream>
 #include <functional>
 #include <unordered_set>
@@ -55,47 +52,73 @@ template <typename T>
     void debug(const vector<T>& container);
 template <typename T>
     void debug(const vector<vector<T>> &container);
- 
+
+const int MOD = 1e9 + 7;
+const int mod = 998244353;
+
 void FastIO();
 void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,m(13); cin >> t;
-    vector<ll> fact(m, 1);
-
-    for(int i = 1; i < m; i++)
-        fact[i] = fact[i - 1] * i;
+    int t,n,m; cin >> t;
     
-    while(t--){
-        cin >> n;
-        vector<bool> used(m, 0);
+    auto ans = [&]() -> bool {
+        cin >> n >> m;
+        vector<string> S(n);
+        vector<vector<bool>> visited(n, vector<bool>(m, 0));
 
-        for(ll i = m - 1, cnt, ans; i >= 0; i--){
-            cnt = 0;
-            while(fact[i] * cnt < n)
-                cnt++;
-            n -= fact[i] * (cnt - 1);
+        for(auto &s : S)
+            cin >> s;
 
-            ans = 0;
-            while(cnt){
-                if(used[ans++])
+        for(int i = 0; i < n - 1; i++){
+            for(int j = 0; j < m - 1; j++){
+                if(visited[i][j])
                     continue;
-                cnt--;
+
+                vector<pair<int, int>> A;
+                for(int r = i; r <= i + 1; r++)
+                    for(int c = j; c <= j + 1; c++)
+                        if(S[r][c] == '*')
+                            A.pb({r, c});
+                
+                if(A.size() != 3)
+                    continue;
+
+                for(auto [r, c] : A)
+                    visited[r][c] = 1;
+
+                for(auto [r, c] : A){
+                    for(int new_r = -1; new_r <= 1; new_r++){
+                        for(int new_c = -1; new_c <= 1; new_c++){
+                            int R = r + new_r, C = c + new_c;
+                            if(R < 0 || C < 0 || R == n || C == m || visited[R][C])
+                                continue;
+                            if(S[R][C] == '*')
+                                return 0;
+                            visited[R][C] = 1;
+                        }
+                    }
+                }
             }
-            
-            used[--ans] = 1;
-            cout << char('a' + ans);
         }
 
-        cout << '\n';
-    }
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < m; j++)
+                if(!visited[i][j] && S[i][j] == '*')
+                    return 0;
+        
+        return 1;
+    };
+
+    while(t--)
+        cout << (ans() ? "YES" : "NO") << '\n';
 
     return 0;
 }
  
-void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cerr.tie(0); }
+void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDbg(const T& x){ cerr << x; }
 template <typename T, typename U>void printDbg(const pair<T, U>& value){ cerr << "("; printDbg(value.first); cerr << ", "; printDbg(value.second); cerr << ")"; }
