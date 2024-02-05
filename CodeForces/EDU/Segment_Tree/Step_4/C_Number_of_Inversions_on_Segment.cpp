@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,24 +57,114 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+struct arr {
+    ll inv = 0;
+    array<int, 40> occ{0};
+
+    arr() {}
+};
+
+struct SegTree {
+    int N;
+    vector<int> A;
+    vector<arr> tree;
+
+    SegTree(int n) {
+        N = n;
+        A.resize(N);
+        tree.resize(4 * N);
+    }
+
+    arr combine(arr a, arr b) {
+        arr c;
+
+        for(int i = 0, cur = 0; i < 40; i++){
+            c.occ[i] = a.occ[i] + b.occ[i];
+            c.inv += 1LL * cur * a.occ[i];
+            cur += b.occ[i];
+        }
+
+        c.inv += a.inv + b.inv;
+
+        return c;
+    }
+
+    void build() {
+        build(0, 0, N - 1);
+    }
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x].occ[A[l]]++;
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+
+    void update(int j, int v){
+        update(0, 0, N - 1, j, v);
+    }
+
+    void update(int x, int l, int r, int j, int v) {
+        if(l == r){
+            tree[x].occ[A[l]]--;
+            A[l] = v;
+            tree[x].occ[A[l]]++;
+            return;
+        }
+
+        int m = (l + r) >> 1;
+        j <= m ? update(2 * x + 1, l, m, j, v)
+               : update(2 * x + 2, m + 1, r, j, v);
+
+        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+
+    ll ans(int l, int r) {
+        return query(0, 0, N - 1, l, r).inv;
+    }
+
+    arr query(int x, int l, int r, int ql, int qr) {
+        if(l > qr || r < ql)
+            return arr();
+        if(ql <= l && r <= qr)
+            return tree[x];
+        
+        int m = (l + r) >> 1;
+        return combine(query(2 * x + 1, l, m, ql, qr),
+                       query(2 * x + 2, m + 1, r, ql, qr));
+    }
+};
+
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree seg(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &a : seg.A)
+        cin >> a, a--;
 
-    while(t--){
-        cin >> n, n--;
+    seg.build();
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    for(int i = 0, t,l,r,j,v; i < q; i++){
+        cin >> t;
+
+        if(t == 2){
+            cin >> j >> v;
+            seg.update(--j, --v);
+        } else {
+            cin >> l >> r;
+            cout << seg.ans(--l, --r) << '\n';
         }
     }
 
@@ -85,6 +172,7 @@ int main(){
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

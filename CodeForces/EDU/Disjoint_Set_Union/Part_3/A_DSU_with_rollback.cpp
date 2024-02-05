@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,24 +59,77 @@ const int mod = 998244353;
 
 void FastIO();
 
-int main(){
- 
-    FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+#include <iostream>
+#include <vector>
+#include <stack>
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+using namespace std;
 
-    while(t--){
-        cin >> n, n--;
+struct DSU {
+    int N, M;
+    vector<int> parent, rank, checkpoints;
+    stack<pair<int, int>> history;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    DSU(int n) : N(n), M(N), parent(N), rank(N, 1) {
+        iota(all(parent), 0);
+    }
+
+    int find(int x) {
+        return x == parent[x] ? x : find(parent[x]);
+    }
+
+    int unite(int x, int y) {
+        x = find(x), y = find(y);
+
+        if(x == y)
+            return M;
+
+        if(rank[x] < rank[y])
+            swap(x, y);
+
+        history.push({y, parent[y]});
+        parent[y] = x;
+        
+        return (--M);
+    }
+
+    void persist() {
+        checkpoints.pb(history.size());
+    }
+
+    int rollback() {
+        int target = checkpoints.back();
+
+        while(history.size() > target){
+            auto& [x, par] = history.top();
+            parent[x] = par;
+            M += x == par;
+            history.pop();
         }
+
+        checkpoints.pop_back();
+
+        return M;
+    }
+};
+
+int main() {
+
+    FastIO();
+    int n, q; cin >> n >> q;
+    DSU dsu(n);
+
+    string op;
+    for(int i = 0, u, v; i < q; i++){
+        cin >> op;
+
+        if(op[0] == 'u'){
+            cin >> u >> v, u--, v--;
+            cout << dsu.unite(u, v) << '\n';
+        } else if(op[0] == 'r')
+            cout << dsu.rollback() << '\n';
+        else    
+            dsu.persist();
     }
 
     return 0;

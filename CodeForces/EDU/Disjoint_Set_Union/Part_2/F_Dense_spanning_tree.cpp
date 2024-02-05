@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,31 +57,108 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+struct DSU {
+    int N;
+    vector<int> rank, parent;
+
+    DSU(int n = 0) : N(n) {
+        rank.resize(n, 0);
+        parent.resize(n);
+        iota(all(parent), 0);
+    }
+
+    int find(int x) {
+        return x == parent[x] ? x : parent[x] = find(parent[x]);
+    }
+
+    void unite(int x, int y) {
+        x = find(x), y = find(y);
+        
+        if(x == y)
+            return;
+        
+        if(rank[x] < rank[y])
+            swap(x, y);
+
+        if(rank[x] == rank[y])
+            rank[x]++;
+
+        parent[y] = x;
+    }
+
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+struct Edge {
+    int u, v, w;
+
+    bool operator<(const Edge& other) const {
+        return w < other.w;
+    }
+};
+
+struct MST {
+    int N;
+    vector<Edge> edges;
+
+    MST(int n) : N(n) {}
+
+    void add_edge(int u, int v, int w) {
+        edges.pb({u, v, w});
+    }
+
+    int ans(int start) {
+        int ending, M = 0;
+        DSU dsu(N);
+
+        if(!start)
+            sort(all(edges));
+
+        for(int i = start; i < edges.size(); i++){
+            auto [u, v, w] = edges[i];
+
+            if(dsu.same(u, v))
+                continue;
+
+            dsu.unite(u, v);
+            ending = i;
+            M++;
+        }
+
+        return M == N - 1 ? edges[ending].w - edges[start].w : INT_MAX;
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> n >> m;
+    MST mst(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0, u,v,w; i < m; i++){
+        cin >> u >> v >> w;
+        u--, v--;
+        mst.add_edge(u, v, w);
     }
+
+    int ans = INT_MAX;
+    for(int i = 0; i < m; i++)
+        ans = min(ans, mst.ans(i));
+    
+    if(ans != INT_MAX)
+        cout << "YES\n" << ans << '\n';
+    else 
+        cout << "NO\n";
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

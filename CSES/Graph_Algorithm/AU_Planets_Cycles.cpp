@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,76 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+struct Graph {
+    int N, max_depth = 30;
+    vector<int> child, cycle, deg, ans;
+
+    Graph(int n) : N(n), child(N), ans(N, 0), cycle(N, 1), deg(N, 0) {}
+
+    void add_child(int u, int v) {
+        child[u] = v;
+        deg[v]++;
+    }
+
+    void dfs(int u) {
+        if(!cycle[u])
+            return;
+
+        cycle[u] = 0;
+        ans[child[u]] = ans[u] + 1;
+        dfs(child[u]);
+        ans[u] = ans[child[u]];
+    }
+
+    void dfs2(int u) {
+        if(ans[u])
+            return;
+        dfs2(child[u]);
+        ans[u] = ans[child[u]] + 1;
+    }
+
+    void build() {
+        queue<int> Q;
+        for(int u = 0; u < N; u++)
+            if(!deg[u]) Q.push(u);
+
+        for(int u; !Q.empty();){
+            u = Q.front(); Q.pop();
+            cycle[u] = 0;
+
+            if(!(--deg[child[u]]))
+                Q.push(child[u]);
+        } 
+
+        for(int u = 0; u < N; u++)
+            if(cycle[u]) dfs(u);
+
+        for(int u = 0; u < N; u++)
+            if(!ans[u]) dfs2(u);
+    }
+};
+
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n; cin >> n;
+    Graph graph(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int u = 0, v; u < n; u++){
+        cin >> v, v--;
+        graph.add_child(u, v);
     }
+
+    graph.build();
+
+    for(int u = 0; u < n; u++)
+        cout << graph.ans[u] << " \n"[u == n - 1];
 
     return 0;
 }

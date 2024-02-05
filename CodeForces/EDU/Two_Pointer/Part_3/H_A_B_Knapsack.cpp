@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,31 +57,49 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    ll n,m,s,a,b; cin >> n >> m >> s >> a >> b;
+    vector<int> A(n), B(m);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &a : A)
+        cin >> a;
+    for(int &b : B)
+        cin >> b;
 
-    while(t--){
-        cin >> n, n--;
+    sort(All(A));
+    sort(All(B));
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0; i < n - s / a; i++)
+        A.ppb();
+    for(int j = 0; j < m - s / b; j++)
+        B.ppb();
+    
+    n = A.size(), m = B.size();
+
+    ll sumA = accumulate(all(A), 0LL), sumB = accumulate(all(B), 0LL);
+    ll ans = max(sumA, sumB), cur = m * b, sum = sumB;
+
+    for(int i = 0, j = m - 1; i < n; i++){
+        sum += A[i], cur += a;
+        
+        while(cur > s && j < m)
+            cur -= b, sum -= B[j--];
+        
+        if(cur <= s)
+            ans = max(ans, sum);
     }
+
+    cout << ans << '\n';
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

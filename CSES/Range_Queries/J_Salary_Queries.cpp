@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,23 +59,113 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct SegTree {
+    int N;
+    vector<int> cnt, tree;
+
+    SegTree(int n) : N(n), cnt(N, 0), tree(4 * N) {}
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = cnt[l];
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    }
+
+    void update(int j, int v){
+        modify(0, 0, N - 1, j, v);
+    }
+
+    void modify(int x, int l, int r, int j, int v) {
+        if(l == r){
+            tree[x] += v;
+            return;
+        }
+
+        int m = (l + r) >> 1;
+        
+        j <= m ? modify(2 * x + 1, l, m, j, v)
+               : modify(2 * x + 2, m + 1, r, j, v);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    }
+
+    int calc(int l, int r) {
+        return process(0, 0, N - 1, l, r);
+    }
+
+    int process(int x, int l, int r, int ql, int qr) {
+        if(l > qr || r < ql)
+            return 0;
+        if(ql <= l && r <= qr)
+            return tree[x];
+        
+        int m = (l + r) >> 1;
+        return process(2 * x + 1, l, m, ql, qr) + 
+               process(2 * x + 2, m + 1, r, ql, qr);
+    }
+};
+
+struct query {
+    char op;
+    int a, b;
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q,cur(0); cin >> n >> q;
+    vector<int> A(n), op;
+    Map<int, int> who;
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &a : A){
+        cin >> a, a--;
+        op.pb(a);
+    }
 
-    while(t--){
-        cin >> n, n--;
+    vector<query> queries(q);
+    for(auto &q : queries){
+        cin >> q.op >> q.a >> q.b;
+        --q.b, --q.a;
+        op.pb(q.b);
+        if(q.op == '?')
+            op.pb(q.a);
+    }
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    sort(all(op));
+    for(int i = 0; i < (int)op.size(); i++){
+        if(i && op[i] == op[i - 1])
+            continue;
+        who[op[i]] = cur++;
+    }
+
+    n = cur;
+
+    SegTree seg(n);
+    for(int &a : A){
+        a = who[a];
+        seg.cnt[a]++;
+    }
+
+    seg.build(0, 0, n - 1);
+
+    for(auto &q : queries){
+        q.b = who[q.b];
+        
+        if(q.op == '!'){
+            seg.update(A[q.a], -1);
+            A[q.a] = q.b;
+            seg.update(A[q.a], 1);
+        } else {
+            q.a = who[q.a];
+            cout << seg.calc(q.a, q.b) << '\n';
         }
     }
 

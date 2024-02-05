@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,23 +59,88 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct SegTree {
+    int N;
+    vector<ll> tree, A, D;
+
+    SegTree(int n) : N(n), A(4 * N, 0), D(4 * N, 0), tree(4 * N, 0) {}
+
+    void push(int x, int m) {
+        A[2 * x + 1] += A[x];
+        A[2 * x + 2] += A[x] + m * D[x];
+        D[2 * x + 1] += D[x];
+        D[2 * x + 2] += D[x];
+    }
+
+    void propagate(int x, int l, int r) {
+        if(!A[x])
+            return;
+
+        tree[x] += (2 * A[x] + (r - l) * D[x]) * (r - l + 1) >> 1;
+
+        if(l != r)
+            push(x, (r - l) / 2 + 1);
+
+        A[x] = D[x] = 0;
+    }
+
+    void update(int l, int r, int a, int d) {
+        modify(0, 0, N - 1, l, r, a, d);
+    }
+
+    void modify(int x, int l, int r, int ql, int qr, int a, int d) {
+        propagate(x, l, r);
+
+        if(l > qr || ql > r)
+            return;
+
+        if(ql <= l && r <= qr){
+            A[x] = (a + 1LL * (l - ql) * d), D[x] = d;
+            propagate(x, l, r);
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        modify(2 * x + 1, l, m, ql, qr, a, d);
+        modify(2 * x + 2, m + 1, r, ql, qr, a, d);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    }
+
+    ll val(int j) {
+        return process(0, 0, N - 1, j);
+    }
+
+    ll process(int x, int l, int r, int j) {
+        propagate(x, l, r);
+
+        if(l == r)
+            return tree[x];
+
+        int m = (l + r) >> 1;
+
+        return (j <= m ? process(2 * x + 1, l, m, j) :
+                         process(2 * x + 2, m + 1, r, j));
+    }
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree A(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, t, l, r, a, d, j; i < q; i++){
+        cin >> t;
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        if(t == 1){
+            cin >> l >> r >> a >> d;
+            l--, r--;
+            A.update(l, r, a, d);
+        } else {
+            cin >> j, j--;
+            cout << A.val(j) << '\n';
         }
     }
 

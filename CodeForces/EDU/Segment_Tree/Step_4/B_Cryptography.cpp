@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -56,35 +53,109 @@ template <typename T>
 template <typename T>
     void debug(const vector<vector<T>> &cont);
 
-const int MOD = 1e9 + 7;
+int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+void add(int &a, const int b) {
+    a += b;
+    if(a >= MOD)
+        a -= MOD;
+}
+
+struct matrix {
+    int M[2][2];
+
+    matrix(int a, int b, int c, int d) {
+        M[0][0] = a, M[0][1] = b, M[1][0] = c, M[1][1] = d;
+    }
+
+    matrix(){}
+
+    matrix operator*(matrix other) {
+        matrix product(0, 0, 0, 0);
+        for(int k = 0; k < 2; k++)
+            for(int i = 0; i < 2; i++)
+                for(int j = 0; j < 2; j++)
+                    add(product.M[i][j], (M[i][k] * other.M[k][j]) % MOD);
+        return product;       
+    }
+};
+
+struct SegTree {
+    int N;
+    vector<matrix> A, tree;
+
+    SegTree(int n) {
+        N = n;
+        A.resize(N);
+        tree.resize(4 * N);
+    }
+
+    void build() {
+        build(0, 0, N - 1);
+    }
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = A[l];
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = tree[2 * x + 1] * tree[2 * x + 2];
+    }
+
+    matrix query(int l, int r) {
+        return query(0, 0, N - 1, l, r);
+    }
+
+    matrix query(int x, int l, int r, int ql, int qr) {
+        if(l > qr || r < ql)
+            return matrix(1, 0, 0, 1);
+        if(ql <= l && r <= qr)
+            return tree[x];
+        
+        int m = (l + r) >> 1;
+        return query(2 * x + 1, l, m, ql, qr) *
+               query(2 * x + 2, m + 1, r, ql, qr);
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> MOD >> n >> q;
+    SegTree seg(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(auto &a : seg.A)
+        for(int i = 0; i < 2; i++)
+            for(int j = 0; j < 2; j++)
+                cin >> a.M[i][j];
 
-    while(t--){
-        cin >> n, n--;
+    seg.build();
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int k = 0, l,r; k < q; k++){
+        cin >> l >> r;
+
+        matrix ans = seg.query(--l, --r);
+        for(int i = 0; i < 2; i++)
+            for(int j = 0; j < 2; j++)
+                cout << ans.M[i][j] << " \n"[j == 1];
+        cout << '\n';
     }
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

@@ -61,25 +61,88 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct SegTree {
+    int N;
+    vector<int> A, B, tree;
+
+    SegTree(int n) : N(n), A(N), B(N), tree(4 * N, -1) {}
+
+    void propagate(int x, int l, int r) {
+        if(tree[x] == -1)
+            return;
+
+        if(l == r){
+            A[l] = B[tree[x]];
+            return;
+        }
+
+        tree[2 * x + 1] = tree[x];
+        tree[2 * x + 2] = tree[x] + (r - l) / 2 + 1;
+
+        tree[x] = -1;
+    }
+
+    void update(int l, int r, int j) {
+        modify(0, 0, N - 1, l, r, j);
+    }
+
+    void modify(int x, int l, int r, int ql, int qr, int j) {
+        propagate(x, l, r);
+
+        if(l > qr || ql > r)
+            return;
+        if(ql <= l && r <= qr){
+            tree[x] = l - ql + j;
+            propagate(x, l, r);
+
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        modify(2 * x + 1, l, m, ql, qr, j);
+        modify(2 * x + 2, m + 1, r, ql, qr, j);
+    }
+
+    int val(int j) {
+        return process(0, 0, N - 1, j);
+    }
+
+    int process(int x, int l, int r, int j) {
+        propagate(x, l, r);
+
+        if(l == r){
+            return A[l];
+        }
+
+        int m = (l + r) >> 1;
+
+        return (j <= m ? process(2 * x + 1, l, m, j) : 
+                         process(2 * x + 2, m + 1, r, j));
+    }
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree seg(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &x : seg.B) cin >> x;
+    for(int &x : seg.A) cin >> x;
 
-    while(t--){
-        cin >> n, n--;
+    for(int i = 0, t, la, lb, k; i < q; i++){
+        cin >> t;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        if(t == 1){
+            cin >> lb >> la >> k;
+            la--, lb--;
+            seg.update(la, la + k - 1, lb);
+        } else {
+            cin >> k, k--;
+            cout << seg.val(k) << '\n';
         }
-    }
+    }   
 
     return 0;
 }

@@ -64,22 +64,24 @@ void FastIO();
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int x,n; cin >> x >> n;
+	set<int> A{0, x};
+	multiset<int> D{x};
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+	for(int i = 0, a; i < n; i++){
+		cin >> a;
 
-    while(t--){
-        cin >> n, n--;
+		auto p = A.upper_bound(a);
+		auto q = p; q--;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
-    }
+		D.erase(D.find(*p - *q));
+		D.insert(a - *q);
+		D.insert(*p - a);
+		A.insert(a);
+
+		auto ans = D.end();
+		cout << *(--ans) << " \n"[i == n - 1];
+	}
 
     return 0;
 }

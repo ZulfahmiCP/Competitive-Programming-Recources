@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,31 +57,42 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+int sum(ll x) {
+    if(!x) return 0;
+    return x % 10 + sum(x / 10);
+}
+
+int len(ll x) {
+    if(!x) return 0;
+    return 1 + len(x / 10);
+}
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
-
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
+    ll t,n,m,k; cin >> t;
     while(t--){
-        cin >> n, n--;
+        cin >> m >> k;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
+        n = m;
+        while(sum(n) > k){
+            for(ll i = 0, x = 1; i <= 18; i++, x *= 10){
+                n += (x - n % x) % x;
+                if(sum(n) <= k)
+                    break;
             }
         }
+
+        cout << n - m << '\n';
     }
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

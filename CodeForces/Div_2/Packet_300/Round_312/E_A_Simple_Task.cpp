@@ -61,25 +61,124 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct SegTree {
+    int N;
+    vector<int> arr, tree, lz;
+
+    SegTree(int n = 0) : N(n), arr(N, 0), tree(4 * N), lz(4 * N, -1) {}
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = arr[l];
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    }
+
+    void propagate(int x, int l, int r) {
+        if(lz[x] == -1)
+            return;
+
+        tree[x] = lz[x] * (r - l + 1);
+
+        if(l != r){
+            lz[2 * x + 1] = lz[x];
+            lz[2 * x + 2] = lz[x];
+        }
+
+        lz[x] = -1;
+    }
+
+    void update(int l, int r, int v) {
+        modify(0, 0, N - 1, l, r, v);
+    }
+
+    void modify(int x, int l, int r, int ql, int qr, int v) {
+        propagate(x, l, r);
+
+        if(l > qr || ql > r)
+            return;
+
+        if(ql <= l && r <= qr){
+            lz[x] = v;
+            propagate(x, l, r);
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        modify(2 * x + 1, l, m, ql, qr, v);
+        modify(2 * x + 2, m + 1, r, ql, qr, v);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    }
+
+    int calc(int l, int r) {
+        return process(0, 0, N - 1, l, r);
+    }
+
+    int process(int x, int l, int r, int ql, int qr) {
+        propagate(x, l, r);
+
+        if(l > qr || ql > r)
+            return 0;
+
+        if(ql <= l && r <= qr)
+            return tree[x];
+
+        int m = (l + r) >> 1;
+
+        return process(2 * x + 1, l, m, ql, qr) +
+               process(2 * x + 2, m + 1, r, ql, qr);
+    }
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m(26),q; cin >> n >> q;
+    string s; cin >> s;
+    SegTree seg[m];
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0; i < m; i++)
+        seg[i] = SegTree(n);
 
-    while(t--){
-        cin >> n, n--;
+    for(int i = 0; i < n; i++)
+        seg[s[i] - 'a'].arr[i] = 1;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    for(int i = 0; i < m; i++)
+        seg[i].build(0, 0, n - 1);
+
+    vector<int> cnt(m);
+    for(int i = 0, l, r, k; i < q; i++){
+        cin >> l >> r >> k, l--, r--;
+        
+        for(int j = 0; j < m; j++){
+            cnt[j] = seg[j].calc(l, r);
+            seg[j].update(l, r, 0);
+        }
+
+        if(k){
+            for(int j = 0; j < m; l += cnt[j++]) if(cnt[j])
+                seg[j].update(l, l + cnt[j] - 1, 1);
+        } else {
+            for(int j = m - 1; j >= 0; l += cnt[j--]) if(cnt[j])
+                seg[j].update(l, l + cnt[j] - 1, 1);
         }
     }
+
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < m; j++)
+            if(seg[j].calc(i, i))
+                s[i] = 'a' + j;
+
+    cout << s << '\n';
 
     return 0;
 }

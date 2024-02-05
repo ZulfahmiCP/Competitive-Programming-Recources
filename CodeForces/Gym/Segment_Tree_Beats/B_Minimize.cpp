@@ -58,27 +58,122 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9;
 
 void FastIO();
+
+struct SegTree {
+    struct node {
+        ll sum;
+        int mx, smx, mxc;
+    };
+
+    int N;
+    vector<int> arr;
+    vector<node> tree;
+
+    SegTree(int n) : N(n), arr(N),  tree(4 * N) {}
+
+    void push(int x, int v) {
+        if(tree[x].mx > v){
+            tree[x].sum -= 1LL * (tree[x].mx - v) * tree[x].mxc;
+            tree[x].mx = v;
+        }
+    }
+
+    void push(int x) {
+        push(2 * x + 1, tree[x].mx);
+        push(2 * x + 2, tree[x].mx);
+    }
+
+    void pull(int x) {
+        tree[x] = {
+            tree[2 * x + 1].sum + tree[2 * x + 2].sum,
+            max(tree[2 * x + 1].mx, tree[2 * x + 2].mx),
+            max(tree[2 * x + 1].smx, tree[2 * x + 2].smx),
+            0
+        };
+
+        for(int y : {2 * x + 1, 2 * x + 2}){
+            if(tree[y].mx == tree[x].mx)
+                tree[x].mxc += tree[y].mxc;
+            else 
+                tree[x].smx = max(tree[x].smx, tree[y].mx);
+        }
+    }
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = {arr[l], arr[l], -INF, 1};
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+        pull(x);
+    }
+
+    void update(int l, int r, int v) {
+        modify(0, 0, N - 1, l, r, v);
+    }
+
+    void modify(int x, int l, int r, int ql, int qr, int v) {
+        if(l > qr || ql > r || tree[x].mx <= v)  
+            return;
+
+        if(ql <= l && r <= qr && tree[x].smx < v){
+            push(x, v);
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        push(x);
+        modify(2 * x + 1, l, m, ql, qr, v);
+        modify(2 * x + 2, m + 1, r, ql, qr, v);
+        pull(x);
+    }
+
+    ll calc(int l, int r) {
+        return process(0, 0, N - 1, l, r);
+    }
+
+    ll process(int x, int l, int r, int ql, int qr) {
+        if(l > qr || ql > r)
+            return 0;
+
+        if(ql <= l && r <= qr)
+            return tree[x].sum;
+
+        int m = (l + r) >> 1;
+        push(x);
+
+        return process(2 * x + 1, l, m, ql, qr) +
+               process(2 * x + 2, m + 1, r, ql, qr);
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n; cin >> n;
+    SegTree A(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &a : A.arr)
+        cin >> a;
+    A.build(0, 0, n - 1);
 
-    while(t--){
-        cin >> n, n--;
+    int q,t,l,r,v; cin >> q;
+    while(q--){
+        cin >> t >> l >> r, l--, r--;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+        if(t == 1){
+            cin >> v;
+            A.update(l, r, v);
+        } else 
+            cout << A.calc(l, r) << '\n';
     }
 
     return 0;

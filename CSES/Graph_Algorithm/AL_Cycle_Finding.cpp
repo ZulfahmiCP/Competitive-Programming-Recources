@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,73 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
 
-int main(){
- 
-    FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+struct Edge {
+    int u, v, w;
+};
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+struct BellmanFord {
+    int N;
+    vector<Edge> edges;
+    vector<int> parent, cycle;
+    vector<ll> dist;
 
-    while(t--){
-        cin >> n, n--;
+    BellmanFord(int n) : N(n), dist(N, INFLL), parent(N, -1) {}
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    void add_edge(int u, int v, int w) {
+        edges.pb({u, v, w});
     }
+
+    bool solve(int source) {
+        dist[source] = 0;
+
+        int x;
+        for(int i = 0; i < N; i++){
+            x = -1;
+            for(const auto &[u, v, w] : edges)
+                if(dist[u] != INFLL && dist[u] + w < dist[v])
+                    dist[v] = dist[u] + w, parent[v] = u, x = v;
+        }
+
+        if(x == -1)
+            return 1;
+
+        for(int i = 0; i < N; i++)
+            x = parent[x];
+
+        for(int v = x;;v = parent[v]){
+            cycle.pb(v);
+            if(v == x && sz(cycle) > 1)
+                break;
+        }
+
+        reverse(all(cycle));
+
+        return 0;
+    }
+};
+
+int main() {
+
+    FastIO();
+    int n,m; cin >> n >> m;
+    BellmanFord graph(n);
+
+    for(int i = 0, u, v, w; i < m; i++){
+        cin >> u >> v >> w, u--, v--;
+        graph.add_edge(u, v, w);
+    }
+
+    if(!graph.solve(0) || !graph.solve(1) || !graph.solve(n - 1)){
+        cout << "YES\n";
+        for(const int &v : graph.cycle)
+            cout << v + 1 << ' ';
+    } else 
+        cout << "NO\n";
 
     return 0;
 }

@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -64,22 +62,30 @@ void FastIO();
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,k,cur(0); cin >> n >> k;
+    vector<int> A(n), cnt(n, 0);
+    Map<int, int> who;
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int &a : A){
+        cin >> a;
+        if(who.find(a) == who.end())
+            a = who[a] = cur++;
+        else
+            a = who[a];
     }
+
+    ll ans = 0;
+    for(int i = 0, j = 0, dist = 0; i < n; i++){
+        while(j < n && (dist < k || cnt[A[j]]))
+            dist += !(cnt[A[j++]]++);
+        
+        if(dist <= k)
+            ans += j - i;
+        
+        dist -= !(--cnt[A[i]]);
+    }
+
+    cout << ans << '\n';
 
     return 0;
 }

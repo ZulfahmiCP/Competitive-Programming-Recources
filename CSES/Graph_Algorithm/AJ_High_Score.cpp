@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,75 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
 
-int main(){
- 
-    FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+struct BellmanFord {
+    int N;
+    vector<vector<pair<int, int>>> graph; 
+    vector<int> parent;
+    vector<bool> vis;
+    vector<ll> dist; 
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    BellmanFord(int n) : N(n), graph(N), vis(N),
+                         parent(N, -1), dist(N, -INFLL) {}
 
-    while(t--){
-        cin >> n, n--;
+    void add_edge(int u, int v, int w) {
+        graph[u].pb({v, w});
+    }
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
+    ll solve(int source = 0) {
+        dist[source] = 0;
+
+        for(int i = 0; i < N - 1; i++){
+            for(int u = 0; u < N; u++) if(dist[u] != -INFLL)
+                for(const auto &[v, w] : graph[u]) 
+                    if(dist[u] + w > dist[v])
+                        dist[v] = dist[u] + w, parent[v] = u;
+        }
+
+        for(int u = 0; u < N; u++) if(dist[u] != -INFLL) {
+            for(const auto &[v, w] : graph[u]){
+                if(dist[u] + w <= dist[v]) 
+                    continue;
+
+                queue<int> explore;
+                explore.push(u);
+                fill(all(vis), 0);
+
+                for(int node; !explore.empty();){
+                    node = explore.front();
+                    explore.pop();
+
+                    if(node == N - 1)
+                        return -1;
+
+                    vis[node] = 1;
+                    for(auto &[adjNode, weight] : graph[node])
+                        if(!vis[adjNode])
+                            explore.push(adjNode);
+                }
             }
         }
+
+        return dist[N - 1];
     }
+};
+
+int main() {
+
+    FastIO();
+    int n,m; cin >> n >> m;
+    BellmanFord graph(n);
+
+    for(int i = 0, u, v, w; i < m; i++){
+        cin >> u >> v >> w, u--, v--;
+        graph.add_edge(u, v, w);
+    }
+
+    cout << graph.solve() << '\n';
 
     return 0;
 }

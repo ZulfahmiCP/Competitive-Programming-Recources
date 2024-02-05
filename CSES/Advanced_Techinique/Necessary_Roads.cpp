@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,63 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+struct Bridges {
+    int N, timer; 
+    vector<vector<int>> edges;
+    vector<pair<int, int>> bridges; 
+    vector<int> tin, low; 
+    vector<bool> vis;
+
+    Bridges(int n) : N(n), timer(0), edges(N), vis(N, 0),
+                     tin(N, -1), low(N, -1) {}
+
+    void add_edge(int u, int v) {
+        edges[u].pb(v);
+        edges[v].pb(u);
+    }
+
+    void build() {
+        for(int u = 0; u < N; u++)
+            if(!vis[u]) dfs(u, -1);
+    }
+
+    void dfs(int u, int p) {
+        tin[u] = low[u] = timer++;
+        vis[u] = 1;
+        
+        for(const int &v : edges[u]){
+            if(v == p) continue;
+            if(!vis[v]){
+                dfs(v, u);
+                low[u] = min(low[u], low[v]);
+                if(low[v] > tin[u])
+                    bridges.pb({u, v});
+            } else
+                low[u] = min(low[u], tin[v]);
+        }
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> n >> m;
+    Bridges bridge(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0, u, v; i < m; i++){
+        cin >> u >> v, u--, v--;
+        bridge.add_edge(u, v);
     }
+
+    bridge.build();
+    cout << sz(bridge.bridges) << '\n';
+    for(auto &[u, v] : bridge.bridges)
+        cout << u + 1 << ' ' << v + 1 << '\n';
 
     return 0;
 }

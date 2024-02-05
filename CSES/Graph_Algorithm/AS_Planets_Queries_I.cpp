@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,27 +59,53 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+struct Graph {
+    int N, max_depth = 30;
+    vector<array<int, 30>> parent;
+    vector<int> depth;
+
+    Graph(int n) : N(n), depth(N, 0), parent(N) {}
+
+    void add_edge(int u, int v) {
+        parent[u][0] = v;
+    }
+
+    void build() {
+        for(int d = 1; d < max_depth; d++)
+            for(int u = 0; u < N; u++)
+                parent[u][d] = parent[parent[u][d - 1]][d - 1];
+    }
+
+    int kth_parent(int u, int k) {
+        for(int d = 0; d < max_depth; d++)
+            if((k >> d) & 1)
+                u = parent[u][d];
+        return u;
+    }
+};
+
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    Graph graph(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int u = 0, v; u < n; u++){
+        cin >> v, v--;
+        graph.add_edge(u, v);
+    }
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    graph.build();
+    
+    for(int i = 0, u, k; i < q; i++){
+        cin >> u >> k, u--;
+        cout << graph.kth_parent(u, k) + 1 << '\n';
     }
 
     return 0;

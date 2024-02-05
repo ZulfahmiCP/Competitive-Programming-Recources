@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -58,33 +56,141 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int MX = 2e5 + 5;
 
 void FastIO();
+void FreeOpen();
+
+int BLOCK;
+
+struct query {
+    int l, r, i;
+    
+    bool operator<(const query &other) const {
+        return make_pair(l / BLOCK, r) < make_pair(other.l / BLOCK, other.r);
+    }
+};
+
+struct MO {
+    int N, Q, ans;
+    vector<int> arr, res;
+    vector<query> queries;
+    vector<int> occ;
+
+    MO(int n) : N(n), Q(0), ans(0), arr(N) {
+        BLOCK = sqrt(N);
+        occ.resize(MX, 0);
+    }
+
+    void add_query(int l, int r) {
+        queries.pb({l, r, Q++});
+    }
+
+    void add(int i) {
+        if(!occ[arr[i]])
+            ans++;
+        occ[arr[i]]++;
+    }
+   
+    void remove(int i) {
+        occ[arr[i]]--;
+        if(!occ[arr[i]])
+            ans--;
+    }
+
+    void process() {
+        res.resize(Q);
+        sort(all(queries));
+
+        int L = queries[0].l, R = queries[0].l - 1;
+
+        for(const auto& q : queries) {
+            while(L > q.l)
+                add(--L);
+            while(L < q.l)
+                remove(L++);
+            while(R < q.r)
+                add(++R);
+            while(R > q.r)
+                remove(R--);
+            
+            res[q.i] = ans;
+        }
+    }
+};
+
+struct FT {
+    int N, timer;
+    vector<vector<int>> tree;
+    vector<int> tour, in, out;
+
+    FT(int n) : N(n), timer(0), tree(N), in(N, 0), out(N, 0) {}
+
+    void build(int root = 0) {
+        dfs(root, -1);
+    }
+
+    void add_edge(int u, int v) {
+        tree[u].pb(v);
+        tree[v].pb(u);
+    }
+
+    void dfs(int u, int p) {
+        tour.pb(u);
+        in[u] = timer++;
+
+        for(int v : tree[u])
+            if(v != p)
+                dfs(v, u);
+
+        tour.pb(u);
+        out[u] = timer++;
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n, cur(0); cin >> n;
+    vector<int> color(n);
+    Map<int, int> other;
+    FT tree(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &c : color){
+        cin >> c;
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+        if(other.find(c) != other.end())
+            c = other[c];
+        else 
+            c = other[c] = cur++;
     }
+
+    for(int i = 1, u, v; i < n; i++){
+        cin >> u >> v;
+        u--, v--;
+        tree.add_edge(u, v);
+    }
+
+    tree.build();
+
+    MO mo(2 * n);
+
+    for(int u = 0; u < n; u++)
+        mo.add_query(tree.in[u], tree.out[u]);
+        
+    for(int i = 0; i < 2 * n; i++)
+        mo.arr[i] = color[tree.tour[i]];
+
+    mo.process();
+
+    for(int i = 0; i < n; i++)
+        cout << mo.res[i] << " \n"[i == n - 1];
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

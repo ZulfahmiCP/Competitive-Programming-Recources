@@ -31,7 +31,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,23 +60,87 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct SegTree {
+    int N;
+    vector<int> arr, tree;
+
+    SegTree(int n) : N(n), arr(N), tree(4 * N, INT_MAX) {}
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = arr[l];
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = min(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+
+    void update(int j, int v){
+        modify(0, 0, N - 1, j, v);
+    }
+
+    void modify(int x, int l, int r, int j, int v) {
+        if(l == r){
+            tree[x] = v;
+            return;
+        }
+
+        int m = (l + r) >> 1;
+        
+        j <= m ? modify(2 * x + 1, l, m, j, v)
+               : modify(2 * x + 2, m + 1, r, j, v);
+
+        tree[x] = min(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+
+    int calc(int l, int r) {
+        return process(0, 0, N - 1, l, r);
+    }
+
+    int process(int x, int l, int r, int ql, int qr) {
+        if(l > qr || r < ql)
+            return INT_MAX;
+        if(ql <= l && r <= qr)
+            return tree[x];
+        
+        int m = (l + r) >> 1;
+        return min(process(2 * x + 1, l, m, ql, qr),
+                   process(2 * x + 2, m + 1, r, ql, qr));
+    }
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree left(n), right(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, a; i < n; i++){
+        cin >> a;
+        left.arr[i] = a - i;
+        right.arr[i] = a + i;
+    }
 
-    while(t--){
-        cin >> n, n--;
+    left.build(0, 0, n - 1);
+    right.build(0, 0, n - 1);
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    for(int i = 0, t, j, v; i < q; i++){
+        cin >> t >> j, j--;
+
+        if(t == 1){
+            cin >> v;
+            left.update(j, v - j);
+            right.update(j, v + j);
+        } else {
+            v = INT_MAX;
+            if(j > 0) v = min(v, left.calc(0, j) + j);
+            if(j < n - 1) v = min(v, right.calc(j, n - 1) - j);
+            cout << v << '\n';
         }
     }
 

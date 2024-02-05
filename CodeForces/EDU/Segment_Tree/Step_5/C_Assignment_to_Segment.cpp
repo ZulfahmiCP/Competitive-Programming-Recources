@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,24 +57,88 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+struct SegTree {
+    int N;
+    vector<int> tree;
+
+
+    SegTree(int n) {
+        N = n;
+        tree.resize(4 * N);
+    }
+
+    int combine(int a, int b) {
+        return b == INT_MAX ? a : b;
+    }
+
+    void apply_combine(int &a, int b) {
+        a = combine(a, b);
+    }
+
+    void propagate(int x, int l, int r) {
+        if(l == r)
+            return;
+
+        apply_combine(tree[2 * x + 1], tree[x]);
+        apply_combine(tree[2 * x + 2], tree[x]);
+
+        tree[x] = INT_MAX;
+    }
+
+    void update(int l, int r, int v) {
+        update(0, 0, N - 1, l, r, v);
+    }
+
+    void update(int x, int l, int r, int ql, int qr, int v) {
+        propagate(x, l, r);
+
+        if(ql > r || qr < l)
+            return;
+
+        if(ql <= l && r <= qr){
+            apply_combine(tree[x], v);
+            return;
+        }
+
+        int m = (l + r) / 2;
+        update(2 * x + 1, l, m, ql, qr, v);
+        update(2 * x + 2, m + 1, r, ql, qr, v);
+    }
+
+    int val(int j) {
+        return query(0, 0, N - 1, j);
+    }
+
+    int query(int x, int l, int r, int j) {
+        propagate(x, l, r);
+
+        if(l == r)
+            return tree[x];
+
+        int m = (l + r) / 2;
+        int res = (j <= m ? query(2 * x + 1, l, m, j)
+                          : query(2 * x + 2, m + 1, r, j));
+        return combine(res, tree[x]);
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree seg(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, t,l,r,v; i < q; i++){
+        cin >> t;
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        if(t == 1){
+            cin >> l >> r >> v;
+            seg.update(l, r - 1, v);
+        } else {
+            cin >> v;
+            cout << seg.val(v) << '\n';
         }
     }
 
@@ -85,6 +146,7 @@ int main(){
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

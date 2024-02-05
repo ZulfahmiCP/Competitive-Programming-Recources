@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,27 +59,77 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
-
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
+    int t,n,best; cin >> t;
     while(t--){
-        cin >> n, n--;
+        cin >> n;
+        vector<vector<int>> graph(n);
+        vector<int> cost(n), deg(n, 0), ans;
+        vector<bool> vis(n, 0), vis2(n, 0);
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        for(int u = 0, v; u < n; u++){
+            cin >> v, v--;
+            graph[u].pb(v);
+            deg[v]++;
         }
+
+        for(int &c : cost)
+            cin >> c;
+
+        queue<int> explore;
+        for(int u = 0; u < n; u++)
+            if(!deg[u])
+                explore.push(u);
+
+        for(int u; !explore.empty();){
+            u = explore.front();
+            explore.pop();
+
+            ans.pb(u);
+            vis[u] = 1;
+
+            for(const int &v : graph[u])
+                if(!(--deg[v]))
+                    explore.push(v);
+        }
+
+        function<void(int)> dfs = [&](int u) -> void {
+            vis2[u] = 1;
+            if(cost[u] < cost[best]) 
+                best = u;
+            
+            for(const int &v : graph[u])
+                if(!vis2[v])
+                    dfs(v);
+        };
+
+        function<void(int)> dfs2 = [&](int u) -> void {
+            vis[u] = 1;
+            ans.pb(u);
+
+            for(const int &v : graph[u])
+                if(vis2[v] && !vis[v])
+                    dfs2(v);
+        };
+
+        for(int u = 0; u < n; u++){
+            if(vis[u])
+                continue;
+
+            best = u;
+            dfs(u);
+            dfs2(graph[best][0]);
+        }
+
+        for(int i = 0; i < n; i++)
+            cout << ans[i] + 1 << " \n"[i == n - 1];
     }
 
     return 0;

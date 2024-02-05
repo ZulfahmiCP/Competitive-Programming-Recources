@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,27 +59,107 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+struct SegTree {
+    struct node {
+        int zero, one;
+    };  
+
+    int N;
+    vector<int> arr, lz;
+    vector<node> tree;
+    string S;
+
+    SegTree(int n) : N(n), arr(N), tree(4 * N), lz(4 * N, 0) {}
+
+    void merge(int x) {
+        tree[x].zero = tree[2 * x + 1].zero ^ tree[2 * x + 2].zero;
+        tree[x].one = tree[2 * x + 1].one ^ tree[2 * x + 2].one;
+    }
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = (S[l] == '0' ? node{arr[l], 0} : node{0, arr[l]});
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+        merge(x);
+    }
+
+    void propagate(int x, int l, int r) {
+        if(!lz[x])
+            return;
+
+        swap(tree[x].one, tree[x].zero);
+
+        if(l != r){
+            lz[2 * x + 1] ^= 1;
+            lz[2 * x + 2] ^= 1;
+        }
+
+        lz[x] = 0;
+    }
+
+    void update(int l, int r, int v) {
+        modify(0, 0, N - 1, l, r, v);
+    }
+
+    void modify(int x, int l, int r, int ql, int qr, int v) {
+        propagate(x, l, r);
+
+        if(l > qr || ql > r)
+            return;
+
+        if(ql <= l && r <= qr){
+            lz[x] += v;
+            propagate(x, l, r);
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        modify(2 * x + 1, l, m, ql, qr, v);
+        modify(2 * x + 2, m + 1, r, ql, qr, v);
+        merge(x);
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
+    int t,n,q; cin >> t;
     while(t--){
-        cin >> n, n--;
+        int n,q; cin >> n;
+        SegTree seg(n);
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
+        for(int &a : seg.arr) 
+            cin >> a;
+        cin >> seg.S >> q;
+
+        seg.build(0, 0, n - 1);
+
+        for(int i = 0, t, l, r, b; i < q; i++){
+            cin >> t;
+
+            if(t == 1){
+                cin >> l >> r, l--, r--;
+                seg.update(l, r, 1);
+            } else {
+                cin >> b;
+                cout << (b ? seg.tree[0].one : seg.tree[0].zero) << ' ';
             }
         }
+
+        cout << '\n';
     }
 
     return 0;

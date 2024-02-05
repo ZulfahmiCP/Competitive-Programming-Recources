@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,55 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> n >> m;
+    vector<vector<int>> graph(n);
+    vector<int> indeg(n, 0), outdeg(n, 0), path;
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, u, v; i < m; i++){
+        cin >> u >> v, u--, v--;
+        graph[u].pb(v);
+        outdeg[u]++;
+        indeg[v]++;
+    }
 
-    while(t--){
-        cin >> n, n--;
+    if(outdeg[0] != indeg[0] + 1 || outdeg[n - 1] != indeg[n - 1] - 1){
+        cout << "IMPOSSIBLE\n";
+        return 0;
+    }
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    for(int u = 1; u < n - 1; u++){
+        if(indeg[u] != outdeg[u]){
+            cout << "IMPOSSIBLE\n";
+            return 0;
         }
     }
+
+    function<void(int)> dfs = [&](int u) -> void {
+        for(int v; !graph[u].empty();){
+            v = graph[u].back();
+            graph[u].ppb();
+            dfs(v);
+        }
+
+        path.pb(u);
+    };
+
+    dfs(0);
+    reverse(all(path));
+
+    if(sz(path) == m + 1){
+        for(int u : path)
+            cout << u + 1 << ' ';
+    } else 
+        cout << "IMPOSSIBLE\n";
 
     return 0;
 }

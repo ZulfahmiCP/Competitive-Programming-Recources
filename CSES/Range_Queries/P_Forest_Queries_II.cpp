@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,23 +59,69 @@ const int mod = 998244353;
 
 void FastIO();
 
-int main(){
- 
+struct Fenwick {
+    int N, M;
+    vector<vector<int>> mat, bit;
+
+    Fenwick(int n, int m) : N(n), M(m) {
+        mat.resize(N, vector<int>(M));
+        bit.resize(N + 1, vector<int>(M + 1, 0));
+    }
+
+    void build() {
+        for(int i = 0; i < N; i++)
+            for(int j = 0; j < M; j++)
+                update(i, j, mat[i][j]);
+    }
+
+    Fenwick(vector<vector<int>>& matrix) {
+        mat = matrix, N = mat.size(), M = mat[0].size();
+        bit.resize(N + 1, vector<int>(M + 1, 0));
+        build();
+    }
+
+    void update(int x, int y, int val) {
+        for(int i = x + 1; i <= N; i += (i & -i)) 
+            for(int j = y + 1; j <= M; j += (j & -j)) 
+                bit[i][j] += val;
+    }
+
+    int query(int x, int y) {
+        int sum = 0;
+        for(int i = x + 1; i > 0; i -= i & -i) 
+            for(int j = y + 1; j > 0; j -= j & -j) 
+                sum += bit[i][j];
+        return sum;
+    }
+
+    int sum(int x1, int y1, int x2, int y2) {
+        return query(x2, y2) - query(x1 - 1, y2) - query(x2, y1 - 1) + query(x1 - 1, y1 - 1);
+    }
+    
+};
+
+int main() {
+
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    vector A(n, vector<int>(n));
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0; i < n; i++)
+        for(int j = 0; j < n; j++){
+            char c; cin >> c;
+            A[i][j] = c == '*';
+        }
 
-    while(t--){
-        cin >> n, n--;
+    Fenwick fenwick(A);
+    for(int i = 0, t,x,y,a,b; i < q; i++){
+        cin >> t >> x >> y, x--, y--;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        if(t == 1){
+            fenwick.update(x, y, A[x][y] ? -1 : 1);
+            A[x][y] = !A[x][y];
+        } else {
+            cin >> a >> b, a--, b--;
+            cout << fenwick.sum(x, y, a, b) << '\n';
         }
     }
 

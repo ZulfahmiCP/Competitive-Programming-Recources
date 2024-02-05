@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,109 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+
+/*  Types of Constrains
+    (x OR y) = (~x ==> y) AND (~y ==> x)
+
+    1. If we want force x to be true, then add (x OR x)
+    2. If we one condition must be true, the add (x OR y) AND (~x OR ~y)
+    3. If at least one condition must be true, then add (x OR y)
+    4. If both condition must be true, then add (~x OR y) AND (x OR ~y) 
+
+    clause OR ==> At least one of them is true
+    clause XOR ==> Only one of them is true
+    clause AND ==> Both of them have the same value
+*/
+
+struct TwoSAT {
+    int N;
+    vector<vector<int>> graph, rev_graph;
+    vector<int> comp, order, ans;
+    vector<bool> vis;
+
+    TwoSAT(int n = 0) : N(n), graph(2 * N), rev_graph(2 * N),
+                        comp(2 * N), vis(2 * N), ans(2 * N) {}
+
+    void add_edge(int u, int v) {
+        graph[u].push_back(v);
+        rev_graph[v].push_back(u);
+    }
+
+    void add_clause_or(int u, bool a, int v, bool b) {
+        add_edge(u + (a ? N : 0), v + (b ? 0 : N));
+        add_edge(v + (b ? N : 0), u + (a ? 0 : N));
+    }
+
+    void add_clause_xor(int u, bool a, int v, bool b) {
+        add_clause_or(u, a, v, b);
+        add_clause_or(u, !a, v, !b);
+    }
+
+    void add_clause_and(int u, bool a, int v, bool b) {
+        add_clause_xor(u, !a, v, b);
+    }
+
+    void dfs(int u) {
+        vis[u] = 1;
+        for(const int &v : graph[u])
+            if(!vis[v]) dfs(v);
+        order.pb(u);
+    }
+
+    void scc(int u, int i) {
+        vis[u] = true;
+        comp[u] = i;
+
+        for(const int &v : rev_graph[u])
+            if(!vis[v]) scc(v, i);
+    }
+
+    bool satisfiable() {
+        fill(all(vis), 0);
+
+        for(int u = 0; u < 2 * N; u++)
+            if(!vis[u]) dfs(u);
+
+        fill(all(vis), 0);
+        reverse(all(order));
+
+        int id = 0;
+        for(const int &v : order)
+            if(!vis[v]) scc(v, id++);
+
+        for(int u = 0; u < N; u++){
+            if(comp[u] == comp[u + N])
+                return 0;
+            ans[u] = (comp[u] > comp[u + N]);
+        }
+
+        return 1;
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> m >> n;
+    TwoSAT sat(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0, u, v; i < m; i++){
+        char s, t;
+        cin >> s >> u >> t >> v, u--, v--;
+        sat.add_clause_or(u, s == '+', v, t == '+');
     }
+
+    if(!sat.satisfiable()){
+        cout << "IMPOSSIBLE\n";
+        return 0;
+    }
+    for(int u = 0; u < n; u++)
+        cout << (sat.ans[u] ? '+' : '-') << " \n"[u == n - 1];
 
     return 0;
 }

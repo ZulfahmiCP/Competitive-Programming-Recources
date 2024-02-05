@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,24 +59,73 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct node {
+    ll pref, suff, sub, sum;
+};
+
+struct SegTree {
+    int N;
+    vector<int> arr;
+    vector<node> tree;
+
+    SegTree(int n) : N(n), arr(N), tree(4 * N) {}
+
+    node combine(node a, node b) {
+        return node{
+            max(a.pref, a.sum + b.pref),
+            max(b.suff, a.suff + b.sum),
+            max({a.sub, b.sub, a.suff + b.pref}),
+            a.sum + b.sum
+        };
+    }
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = arr[l] > 0 ? node{arr[l], arr[l], arr[l], arr[l]} : node{0, 0, 0, arr[l]};
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+
+    ll maxsub_after_update(int j, int v){
+        modify(0, 0, N - 1, j, v);
+        return tree[0].sub;
+    }
+
+    void modify(int x, int l, int r, int j, int v) {
+        if(l == r){
+            tree[x] = v > 0 ? node({v, v, v, v}) : node{0, 0, 0, v};
+            return;
+        }
+
+        int m = (l + r) >> 1;
+        
+        j <= m ? modify(2 * x + 1, l, m, j, v)
+               : modify(2 * x + 2, m + 1, r, j, v);
+
+        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree seg(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &a : seg.arr)
+        cin >> a;
+    seg.build(0, 0, n - 1);
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0, j, v; i < q; i++){
+        cin >> j >> v, j--;
+        cout << seg.maxsub_after_update(j, v) << '\n';
     }
 
     return 0;

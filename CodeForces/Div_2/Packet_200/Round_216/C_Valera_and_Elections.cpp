@@ -64,22 +64,39 @@ void FastIO();
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n; cin >> n;
+    vector<vector<pair<int, int>>> tree(n);
+    vector<bool> use(n, 0);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 1, u,v,w; i < n; i++){
+        cin >> u >> v >> w;
+        u--, v--, w--;
+        tree[u].pb({v, w});
+        tree[v].pb({u, w});
+    }
 
-    while(t--){
-        cin >> n, n--;
+    function<pair<int, int>(int, int)> dfs = [&](int u, int p) -> pair<int, int> {
+        pair<int, int> best = {u, 0}, cur;
+        for(auto &[v, w] : tree[u]){
+            if(v == p) 
+                continue;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
+            cur = dfs(v, u);
+            cur.se |= w;
+            if(cur.se){
+                use[cur.fi] = 1;
+                best = cur;
             }
         }
-    }
+
+        return best;
+    };
+
+    dfs(0, -1);
+    cout << accumulate(all(use), 0) << '\n';
+    for(int i = 0; i < n; i++)
+        if(use[i]) 
+            cout << i + 1 << ' ';
 
     return 0;
 }

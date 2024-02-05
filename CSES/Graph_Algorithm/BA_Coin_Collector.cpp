@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,107 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+struct SCC {
+    int N, M;
+    vector<vector<int>> adj, revAdj, graph;
+    vector<int> parent, order;
+    vector<ll> coin, ans;
+    vector<bool> vis;
+
+    SCC(int n) : N(n), M(0), coin(N), adj(N), ans(N, 0),
+                 revAdj(N), parent(N), vis(N, 0), graph(N) {
+        iota(all(parent), 0);
+    }
+
+    void add_edge(int u, int v) {
+        adj[u].pb(v);
+        revAdj[v].pb(u);
+    }
+
+    void build() {
+        for(int u = 0; u < N; u++)
+            if(!vis[u]) dfs(u);
+
+        fill(all(vis), 0);
+        reverse(all(order));
+
+        for(const int &u : order){
+            if(vis[u]) continue;
+            explore(u);
+            M++;
+        }
+
+        for(int u = 0; u < N; u++)
+            for(int v : adj[u])
+                if(parent[u] != parent[v])
+                    graph[parent[u]].pb(parent[v]);
+
+        for(int u = 0; u < N; u++)
+            if(!graph[u].empty())
+                graph[u].erase(unique(all(graph[u])), graph[u].end());
+    }
+
+    void dfs(int u) {
+        vis[u] = 1;
+        for(const int &v : adj[u])
+            if(!vis[v]) dfs(v);
+        order.pb(u);
+    }
+
+    void explore(int u) {
+        vis[u] = 1;
+
+        if(parent[u] != u)
+            coin[parent[u]] += coin[u];
+
+        for(const int &v : revAdj[u]){
+            if(vis[v]) continue;
+            parent[v] = parent[u];
+            explore(v);
+        }
+    }
+
+    void trav(int u, int p) {
+        vis[u] = 1;
+        ans[u] = coin[u];
+
+        for(const int &v : graph[u]){
+            if(v == p) continue;
+            if(!vis[v]) trav(v, u);
+            ans[u] = max(ans[u], coin[u] + ans[v]);
+        }
+    }
+
+    ll solve() {
+        fill(all(vis), 0);
+        for(int u = 0; u < N; u++)
+            if(!vis[u] && u == parent[u])
+                trav(u, -1);
+        return *max_element(all(ans));
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> n >> m;
+    SCC graph(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(auto &c : graph.coin)
+        cin >> c;
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0, u, v;  i < m; i++){
+        cin >> u >> v, u--, v--;
+        graph.add_edge(u, v);
     }
+
+    graph.build();
+    cout << graph.solve() << '\n';
 
     return 0;
 }

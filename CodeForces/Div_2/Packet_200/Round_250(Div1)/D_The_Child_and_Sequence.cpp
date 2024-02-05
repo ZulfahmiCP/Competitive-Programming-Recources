@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,7 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
 using namespace std;
@@ -61,23 +59,111 @@ const int mod = 998244353;
 
 void FastIO();
 
+struct SegTree {
+    int N;
+    vector<int> arr;
+    vector<ll> tree, mx;
+
+    SegTree(int n) : N(n), arr(N), tree(4 * N), mx(4 * N) {}
+
+    void build(int x, int l, int r) {
+        if(l == r){
+            tree[x] = arr[l];
+            mx[x] = arr[l];
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        build(2 * x + 1, l, m);
+        build(2 * x + 2, m + 1, r);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        mx[x] = max(mx[2 * x + 1], mx[2 * x + 2]);
+    }
+
+    void update(int l, int r, int v) {
+        modulo(0, 0, N - 1, l, r, v);
+    }
+
+    void modulo(int x, int l, int r, int ql, int qr, int v) {
+        if(l > qr || r < ql || mx[x] < v)
+            return;
+
+        if(l == r){
+            tree[x] %= v;
+            mx[x] = tree[x];
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        modulo(2 * x + 1, l, m, ql, qr, v);
+        modulo(2 * x + 2, m + 1, r, ql, qr, v);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        mx[x] = max(mx[2 * x + 1], mx[2 * x + 2]);
+    }
+
+    void update(int j, int v){
+        modify(0, 0, N - 1, j, v);
+    }
+
+    void modify(int x, int l, int r, int j, int v) {
+        if(l == r){
+            tree[x] = v;
+            mx[x] = v;
+            return;
+        }
+
+        int m = (l + r) >> 1;
+        
+        j <= m ? modify(2 * x + 1, l, m, j, v)
+               : modify(2 * x + 2, m + 1, r, j, v);
+
+        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        mx[x] = max(mx[2 * x + 1], mx[2 * x + 2]);
+    }
+
+    ll calc(int l, int r) {
+        return process(0, 0, N - 1, l, r);
+    }
+
+    ll process(int x, int l, int r, int ql, int qr) {
+        if(l > qr || r < ql)
+            return 0;
+
+        if(ql <= l && r <= qr)
+            return tree[x];
+        
+        int m = (l + r) >> 1;
+        return process(2 * x + 1, l, m, ql, qr) + 
+               process(2 * x + 2, m + 1, r, ql, qr);
+    }
+};
+
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree A(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int &a : A.arr)
+        cin >> a;
+    A.build(0, 0, n - 1);
 
-    while(t--){
-        cin >> n, n--;
+    for(int i = 0, t, l, r, j, v; i < q; i++){
+        cin >> t;
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        if(t == 1){
+            cin >> l >> r, l--, r--;
+            cout << A.calc(l, r) << '\n';
+        } else if(t == 2) {
+            cin >> l >> r >> v, l--, r--;
+            A.update(l, r, v);
+        } else {
+            cin >> j >> v, j--;
+            A.update(j, v);
         }
     }
 

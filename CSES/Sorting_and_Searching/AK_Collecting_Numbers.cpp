@@ -64,22 +64,21 @@ void FastIO();
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n, ans(1); cin >> n;
+    vector<int> pos(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    for(int i = 0, a; i < n; i++){
+        cin >> a, a--;
+        pos[a] = i;
     }
+
+    for(int i = 0, prev = 0; i < n; i++){
+        if(prev > pos[i])
+            ans++;
+        prev = pos[i];
+    }
+
+    cout << ans << '\n';
 
     return 0;
 }

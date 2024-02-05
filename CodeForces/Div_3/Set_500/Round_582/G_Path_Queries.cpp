@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,31 +57,96 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+struct DSU {
+    int N;
+    vector<int> parent, size;
+
+    DSU(int n) {
+        N = n;
+        parent.resize(N);
+        size.resize(N, 1);
+        iota(all(parent), 0);
+    }
+
+    int find(int x) {
+        return (x == parent[x]) ? x : (parent[x] = find(parent[x]));
+    }
+
+    void join(int x, int y) {
+        x = find(x), y = find(y);
+
+        if(x == y)
+            return;
+
+        if(size[x] < size[y])
+            swap(x, y);
+        
+        parent[y] = x;
+        size[x] += size[y];
+        size[y] = 0;
+    }
+
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+ll val(ll x) {
+    return x * (x - 1) >> 1; 
+}
+
+struct edge {
+    int u,v,w;
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q,mx(2e5); cin >> n >> q;
+    vector<ll> ans(mx, 0);
+    vector<edge> edges(n - 1);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, u,v,w; i < n - 1; i++){
+        cin >> u >> v >> w;
+        u--, v--, w--;
+        edges[i] = {u, v, w};
+    }
 
-    while(t--){
-        cin >> n, n--;
+    sort(all(edges), [&](edge &a, edge &b) {
+        return a.w < b.w;
+    });
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+    ll cur = 0;
+    DSU dsu(n);
+    for(int i = 0, pu,pv; i < n - 1; i++){
+        auto [u, v, w] = edges[i];
+
+        pu = dsu.find(u), pv = dsu.find(v);
+        
+        cur -= val(dsu.size[pu]) + val(dsu.size[pv]);
+        cur += val(dsu.size[pu] + dsu.size[pv]);
+
+        dsu.join(u, v);
+        
+        ans[w] = cur;
+    }
+
+    for(int i = 1; i < mx; i++)
+        if(!ans[i])
+            ans[i] = ans[i - 1];
+    
+    for(int i = 0, x; i < q; i++){
+        cin >> x, x--;
+        cout << ans[x] << " \n"[i == q - 1];
     }
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

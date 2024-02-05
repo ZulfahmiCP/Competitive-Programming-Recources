@@ -64,22 +64,40 @@ void FastIO();
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n = 8, ans = 0;
+    vector<string> S(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(auto &s : S)
+        cin >> s;
 
-    while(t--){
-        cin >> n, n--;
+    vector<int> Q(n);
+    iota(all(Q), 0);
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    auto can_place = [&]() -> bool {
+        vector<bool> A(4 * n, 0), B(4 * n, 0);
+        for(int i = 0; i < n; i++){
+            if(S[i][Q[i]] == '*')
+                return 0;
+            if(A[i + Q[i]])
+                return 0;
+            if(B[i - Q[i] + n - 1])
+                return 0;
+
+            A[i + Q[i]] = 1;
+            B[i - Q[i] + n - 1] = 1;
         }
-    }
+
+        return 1;
+    };  
+
+    do {
+        ans += can_place();
+        for(int i = 0; i < n; i++)
+            if(S[i][Q[i]] == '-')
+                S[i][Q[i]] = '.';
+    } while(next_permutation(all(Q)));
+
+    cout << ans << '\n';
 
     return 0;
 }

@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,50 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
+
+const int N = 5e4 + 5;
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> n >> m;
+    vector<vector<int>> graph(n);
+    vector<bitset<N>> ans(n);
+    vector<int> in(n, 0);
+    queue<int> Q;
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, u, v; i < m; i++){
+        cin >> u >> v, u--, v--;
+        graph[v].pb(u);
+        in[u]++;
+    }
 
-    while(t--){
-        cin >> n, n--;
+    for(int u = 0; u < n; u++){
+        if(!in[u]){
+            ans[u].set(u);
+            Q.push(u);
+        }
+    }
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
+    for(int u; !Q.empty();){
+        u = Q.front();
+        Q.pop();
+
+        for(const int &v : graph[u]){
+            ans[v] |= ans[u];
+            if(!(--in[v])){
+                ans[v].set(v);
+                Q.push(v);
             }
         }
     }
+
+    for(int u = 0; u < n; u++)
+        cout << ans[u].count() << " \n"[u == n - 1];
 
     return 0;
 }

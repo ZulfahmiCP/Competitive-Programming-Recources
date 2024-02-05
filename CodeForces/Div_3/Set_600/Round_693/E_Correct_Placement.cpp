@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,31 +57,45 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+using Pair = pair<pair<int, int>, int>;
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
-
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
-
+    int t,n,mn; cin >> t;
     while(t--){
-        cin >> n, n--;
+        cin >> n;
+        vector<Pair> A(n);
+        vector<int> ans(n, -1);
 
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+        for(int i = 0, a,b; i < n; i++){
+            cin >> a >> b;
+            if(a > b) swap(a, b);
+            A[i] = {{a, -b}, i};
         }
+
+        sort(all(A));
+        mn = 1e9;
+
+        for(int i = 0, x = 0; i < n; i++){
+            if(-A[i].fi.se <= mn){
+                mn = -A[i].fi.se;
+                x = A[i].se;
+            }  else 
+                ans[A[i].se] = x + 1;
+        }
+
+        for(int i = 0; i < n; i++)
+            cout << ans[i] << " \n"[i == n - 1];
     }
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

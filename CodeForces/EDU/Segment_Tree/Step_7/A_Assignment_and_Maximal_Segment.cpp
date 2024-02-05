@@ -4,10 +4,9 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <climits>
+#include <iomanip>
 #include <cstring>
 #include <numeric>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -31,8 +30,6 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
-#define sz(x) (int)x.size()
-#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -60,31 +57,99 @@ const int MOD = 1e9 + 7;
 const int mod = 998244353;
 
 void FastIO();
+void FreeOpen();
+
+struct node {
+    ll pref = 0, suff = 0, seg = 0, sum = 0;
+    
+    void set(ll v) {
+        sum = v;
+        pref = suff = seg = max(0LL, v);
+    }
+};
+
+struct SegTree {
+    int N;
+    vector<node> tree;
+    vector<int> lazy;
+
+    SegTree(int n) : N(n) {
+        tree.resize(4 * N);
+        lazy.resize(4 * N, INT_MAX);
+    }
+
+    node combine(node a, node b) {
+        return node{
+            max(a.pref, a.sum + b.pref),
+            max(b.suff, a.suff + b.sum),
+            max({a.seg, b.seg, a.suff + b.pref}),
+            a.sum + b.sum
+        };
+    }
+
+    void single(int x, int v) {
+        lazy[2 * x + 1] = v;
+        lazy[2 * x + 2] = v;
+    }
+
+    void propagate(int x, int l, int r) {
+        if(lazy[x] == INT_MAX)
+            return;
+
+        tree[x].set(1LL * lazy[x] * (r - l + 1));
+
+        if(l != r)
+            single(x, lazy[x]);
+
+        lazy[x] = INT_MAX;
+    }
+
+    void update(int l, int r, int v) {
+        update(0, 0, N - 1, l, r, v);
+    }
+
+    void update(int x, int l, int r, int ql, int qr, int v) {
+        propagate(x, l, r);
+
+        if(l > qr || ql > r)
+            return;
+
+        if(ql <= l && r <= qr){
+            tree[x].set(1LL * v * (r - l + 1));
+
+            if(l != r)
+                single(x, v);
+
+            return;
+        }
+
+        int m = (l + r) >> 1;
+
+        update(2 * x + 1, l, m, ql, qr, v);
+        update(2 * x + 2, m + 1, r, ql, qr, v);
+
+        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    }
+};
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,q; cin >> n >> q;
+    SegTree A(n);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, l,r,v; i < q; i++){
+        cin >> l >> r >> v;
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
-        }
+        A.update(l, r - 1, v);
+        cout << A.tree[0].seg << '\n';
     }
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
+void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

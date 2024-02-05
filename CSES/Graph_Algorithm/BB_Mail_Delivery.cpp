@@ -19,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -58,28 +59,56 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
 
 void FastIO();
 
 int main(){
  
     FastIO();
-    ll t,n,k(18); cin >> t;
-    vector<ll> len(k, 9);
+    int n,m; cin >> n >> m;
+    vector<vector<int>> graph(n), edges(n);
+    vector<int> degree(n, 0), path;
+    vector<bool> vis(m, 0);
 
-    for(int i = 1; i < k; i++)
-        len[i] = pow(10, i - 1) * 9 * i;
+    for(int i = 0, u, v; i < m; i++){
+        cin >> u >> v, u--, v--;
+        graph[u].pb(v);
+        graph[v].pb(u);
+        edges[u].pb(i);
+        edges[v].pb(i);
+    }
 
-    while(t--){
-        cin >> n, n--;
-
-        for(int i = 1; i < k; n -= len[i++]){
-            if(n < len[i]){
-                cout << to_string((ll)pow(10, i - 1) + n / i)[n % i] << '\n';
-                break;
-            }
+    for(int u = 0; u < n; u++){
+        if(sz(graph[u]) & 1){
+            cout << "IMPOSSIBLE\n";
+            return 0;
         }
     }
+
+    function<void(int)> dfs = [&](int u) -> void {
+        for(int v, e; degree[u] < sz(graph[u]);){
+            v = graph[u][degree[u]];
+            e = edges[u][degree[u]];
+            degree[u]++;
+
+            if(!vis[e]){
+                vis[e] = 1;
+                dfs(v);
+            }
+        }
+
+        path.pb(u);
+    };
+
+    dfs(0);
+
+    if(sz(path) == m + 1){
+        for(int u : path)
+            cout << u + 1 << ' ';
+    } else 
+        cout << "IMPOSSIBLE\n";
 
     return 0;
 }
