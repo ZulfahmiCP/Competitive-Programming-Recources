@@ -43,9 +43,9 @@ template<class T, class U> using Map = unordered_map<T, U>;
 template <typename T>
     void prd(const T& x);
 template <typename T, typename U>
-    void prd(const pair<T, U>& vue);
+    void prd(const pair<T, U>& value);
 template <typename T, typename... Args>
-    void prd(const T& vue, Args... args);
+    void prd(const T& value, Args... args);
 template <typename... Args>
     void debug(Args... args);
 template <typename K, typename V>
@@ -65,87 +65,108 @@ const double EPS = 1e-9;
 
 void FastIO();
 
-struct node {
-    ll pref, suff, seg, sum;
-};
-
-struct SegTree {
+struct MinCut {
     int N;
-    vector<int> arr;
-    vector<node> tree;
+    vector<pair<int, int>> min_cut;
+    vector<vector<int>> capacity;
+    vector<vector<int>> graph;
+    vector<int> parent;
+    vector<bool> vis;
 
-    SegTree(int n = 0) : N(n), arr(N), tree(4 * N) {}
-    SegTree(const vector<int> &A) : N(sz(A)), arr(A), tree(4 * N) {
-        build(0, 0, N - 1);
+    MinCut(int n) : N(n), graph(N), vis(N, 0), parent(N) {
+        capacity.assign(N, vector<int>(N, 0));
+    };
+
+    void add_edge(int u, int v) {
+        graph[u].pb(v);
+        graph[v].pb(u);
+        capacity[u][v]++;
+        capacity[v][u]++;
     }
 
-    node combine(node a, node b) {
-        return node{
-            max(a.pref, a.sum + b.pref),
-            max(b.suff, a.suff + b.sum),
-            max({a.seg, b.seg, a.suff + b.pref}),
-            a.sum + b.sum
-        };
-    }
+    int bfs(int s, int t) {
+        fill(all(parent), -1);
 
-    void build(int x, int l, int r) {
-        if(l == r){
-            tree[x] = arr[l] > 0 ? node{arr[l], arr[l], arr[l], arr[l]} : node{0, 0, 0, arr[l]};
-            return;
+        queue<pair<int, int>> explore;
+        explore.push({s, INF});
+        parent[s] = s;
+
+        for(int new_flow; !explore.empty();){
+            auto &[u, flow] = explore.front();
+            explore.pop();
+
+            for(const int &v : graph[u]){
+                if(parent[v] != -1 || !capacity[u][v])
+                    continue;
+                
+                parent[v] = u;
+                new_flow = min(flow, capacity[u][v]);
+                if(v == t)
+                    return new_flow;
+                explore.push({v, new_flow});
+            }
         }
 
-        int m = (l + r) / 2;
-
-        build(2 * x + 1, l, m);
-        build(2 * x + 2, m + 1, r);
-
-        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+        return 0;
     }
 
-    void update(int j, int v){
-        update(0, 0, N - 1, j, v);
-    }
+    int max_flow(int s, int t) {
+        int flow = 0, new_flow;
 
-    void update(int x, int l, int r, int j, int v) {
-        if(l == r){
-            tree[x] = v > 0 ? node{v, v, v, v} : node{0, 0, 0, v};
-            return;
+        while(new_flow = bfs(s, t)){
+            flow += new_flow;
+            for(int u = t; u != s; u = parent[u]){
+                capacity[parent[u]][u] -= new_flow;
+                capacity[u][parent[u]] += new_flow;
+            }
         }
 
-        int m = (l + r) >> 1;
+        return flow;
+    }
 
-        j <= m ? update(2 * x + 1, l, m, j, v)
-               : update(2 * x + 2, m + 1, r, j, v);
+    void dfs(int u) {
+        vis[u] = 1;
+        for(const int &v : graph[u])
+            if(!vis[v] && capacity[u][v])
+                dfs(v);
+    }
 
-        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    void find_min_cut(int s, int t) {
+        max_flow(s, t);
+        dfs(s);
+        for(int u = 0; u < N; u++){
+            if(!vis[u]) continue;
+            for(const int &v : graph[u])
+                if(!vis[v])
+                    min_cut.pb({u, v});
+        }
     }
 };
 
 int main(){
  
     FastIO();
-    int n,q; cin >> n >> q;
-    vector<int> A(n);
+    int n,m; cin >> n >> m;
+    MinCut graph(n);
 
-    for(int &a : A)
-        cin >> a;
-    
-    SegTree seg(A);
-
-    cout << seg.tree[0].seg << '\n';
-    for(int i = 0, pos, v; i < q; i++){
-        cin >> pos >> v;
-        seg.update(pos, v);
-        cout << seg.tree[0].seg << '\n';
+    for(int i = 0, u, v; i < m; i++){
+        cin >> u >> v, u--, v--;
+        graph.add_edge(u, v);
     }
+    
+    graph.find_min_cut(0, n - 1);
+
+    cout << sz(graph.min_cut) << '\n';
+    for(auto &[u, v] : graph.min_cut)
+        cout << u + 1 << ' ' << v + 1 << '\n';
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 template <typename T> void prd(const T& x){ cerr << x; }
-template <typename T, typename U>void prd(const pair<T, U>& vue){ cerr << "("; prd(vue.first); cerr << ", "; prd(vue.second); cerr << ")"; }
-template <typename T, typename... Args>void prd(const T& vue, Args... args){prd(vue); cerr << ", "; prd(args...); }
+template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
+template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }
 template <typename... Args> void debug(Args... args){ cerr << "[";  prd(args...); cerr << "]\n"; }
 template <typename K, typename V> void debug(const map<K, V>& cont){ cerr << '['; bool cm = 0; for(auto [k, v] : cont){ if(cm) cerr << ", "; cerr << '['; prd(k); cerr << ", "; prd(v); cerr << ']'; cm = 1; } cerr << "]\n"; }
 template <typename T> void debug(const set<T>& cont) { cerr << '['; bool cm = 0; for (const auto& st : cont) { if (cm) cerr << ", "; prd(st); cm = 1; } cerr << "]\n";}

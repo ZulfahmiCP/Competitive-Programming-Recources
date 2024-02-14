@@ -30,8 +30,11 @@
 #define ll long long int
 #define Int unsigned int 
 #define Long unsigned long long int
-#define all(x) x.begin(), x.end()
-#define All(x) x.rbegin(), x.rend()
+#define eliminate(x, y) (x).erase(remove(all(x), (y)), (x).end())
+#define make_unique(x) (x).erase(unique(all(x)), (x).end());
+#define all_range(x) (x).begin(), (x).begin()
+#define All(x) (x).rbegin(), (x).rend()
+#define all(x) (x).begin(), (x).end()
 #define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
@@ -60,23 +63,25 @@ template <typename T>
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
 const int INF = 2e9 + 7;
-const ll INFLL = 9e18 + 7;
+const ll INFL = 9e18 + 7;
 const double EPS = 1e-9;
 
 void FastIO();
 
 struct SegTree {
     int N;
-    vector<int> arr;
-    vector<ll> tree, A, D;
+    vector<int> arr, dep;
+    vector<ll> tree, lz, depth;
 
-    SegTree(int n) : N(n), arr(N), A(4 * N, 0), D(4 * N, 0), tree(4 * N) {}
-
-    SegTree(const vector<int> &a) : N(sz(a)), arr(a), tree(4 * N), A(4 * N, 0), D(4 * N, 0) {}
+    SegTree(int n) : N(n), arr(N), dep(N), tree(4 * N, 0), 
+                     depth(4 * N), lz(4 * N, 0) {
+        build(0, 0, N - 1);
+    }
 
     void build(int x, int l, int r) {
         if(l == r){
             tree[x] = arr[l];
+            depth[x] = dep[l];
             return;
         }
 
@@ -86,65 +91,121 @@ struct SegTree {
         build(2 * x + 2, m + 1, r);
 
         tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
-    }
-
-    void push(int x, int m) {
-        A[2 * x + 1] += A[x];
-        A[2 * x + 2] += A[x] + m * D[x];
-        D[2 * x + 1] += D[x];
-        D[2 * x + 2] += D[x];
+        depth[x] = depth[2 * x + 1] + depth[2 * x + 2];
     }
 
     void propagate(int x, int l, int r) {
-        if(!A[x])
+        if(!lz[x])
             return;
 
-        tree[x] += (2 * A[x] + (r - l) * D[x]) * (r - l + 1) >> 1;
+        tree[x] += lz[x] * depth[x];
 
-        if(l != r)
-            push(x, (r - l) / 2 + 1);
+        if(l != r){
+            lz[2 * x + 1] += lz[x];
+            lz[2 * x + 2] += lz[x];
+        }
 
-        A[x] = D[x] = 0;
+        lz[x] = 0;
     }
 
-    void update(int l, int r, int a, int d) {
-        modify(0, 0, N - 1, l, r, a, d);
+    void update(int l, int r, int v) {
+        modify(0, 0, N - 1, l, r, v);
     }
 
-    void modify(int x, int l, int r, int ql, int qr, int a, int d) {
+    void modify(int x, int l, int r, int ql, int qr, int v) {
         propagate(x, l, r);
 
         if(l > qr || ql > r)
             return;
 
         if(ql <= l && r <= qr){
-            A[x] = (a + 1LL * (l - ql) * d), D[x] = d;
+            lz[x] = v;
             propagate(x, l, r);
             return;
         }
 
         int m = (l + r) >> 1;
 
-        modify(2 * x + 1, l, m, ql, qr, a, d);
-        modify(2 * x + 2, m + 1, r, ql, qr, a, d);
+        modify(2 * x + 1, l, m, ql, qr, v);
+        modify(2 * x + 2, m + 1, r, ql, qr, v);
 
         tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        depth[x] = depth[2 * x + 1] + depth[2 * x + 2];
     }
 
-    ll val(int j) {
-        return process(0, 0, N - 1, j);
+    ll calc(int l, int r) {
+        return process(0, 0, N - 1, l, r);
     }
 
-    ll process(int x, int l, int r, int j) {
+    ll process(int x, int l, int r, int ql, int qr) {
         propagate(x, l, r);
 
-        if(l == r)
+        if(l > qr || ql > r)
+            return 0;
+
+        if(ql <= l && r <= qr)
             return tree[x];
 
         int m = (l + r) >> 1;
 
-        return (j <= m ? process(2 * x + 1, l, m, j) :
-                         process(2 * x + 2, m + 1, r, j));
+        return process(2 * x + 1, l, m, ql, qr) +
+               process(2 * x + 2, m + 1, r, ql, qr);
+    }
+};
+
+struct FT {
+    int N, root;
+    vector<vector<int>> adj;
+    vector<int> tour, in, out, val;
+    vector<int> sub, depth, parent;
+    SegTree seg;
+
+    FT(int n) : N(n), in(N), out(N), adj(N), seg(N),
+                depth(N), parent(N), sub(N, 1), val(N) {}
+
+    void build(int rt = 0) {
+        root = rt;  
+        depth[root] = 0;
+        parent[root] = -1;
+        dfs(root);
+
+        for(int u = 0; u < N; u++){
+            seg.arr[in[u]] = val[u];
+            seg.dep[in[u]] = (depth[u] & 1  ? -1 : 1);
+        }
+
+        seg.build(0, 0, N - 1);
+    }
+
+    void add_edge(int u, int v) {
+        adj[u].pb(v);
+        adj[v].pb(u);
+    }
+
+    int dfs(int u) {
+        in[u] = sz(tour);
+        tour.pb(u);
+
+        for(const int &v : adj[u]){
+            if(v == parent[u]) continue;
+            parent[v] = u, depth[v] = depth[u] + 1;
+            sub[u] += dfs(v);
+        }
+
+        out[u] = sz(tour) - 1;
+        return sub[u];
+    }
+
+    void update(int u, int x) {
+        seg.update(in[u], out[u], (depth[u] & 1 ? -x : x));
+    }
+
+    ll calc(int u) {
+        return seg.calc(in[u], in[u]);
+    }
+
+    int& operator[](int u) {
+        return tour[u];
     }
 };
 
@@ -152,19 +213,26 @@ int main(){
  
     FastIO();
     int n,q; cin >> n >> q;
-    SegTree A(n);
+    FT tree(n);
 
-    for(int i = 0, t, l, r, a, d, j; i < q; i++){
-        cin >> t;
+    for(int &a : tree.val)
+        cin >> a;
+
+    for(int i = 1, u, v; i < n; i++){
+        cin >> u >> v, u--, v--;
+        tree.add_edge(u, v);
+    }
+
+    tree.build();
+    
+    for(int i = 0, t, u, x; i < q; i++){
+        cin >> t >> u, u--;
 
         if(t == 1){
-            cin >> l >> r >> a >> d;
-            l--, r--;
-            A.update(l, r, a, d);
-        } else {
-            cin >> j, j--;
-            cout << A.val(j) << '\n';
-        }
+            cin >> x;
+            tree.update(u, x);
+        } else 
+            cout << tree.calc(u) << '\n';
     }
 
     return 0;

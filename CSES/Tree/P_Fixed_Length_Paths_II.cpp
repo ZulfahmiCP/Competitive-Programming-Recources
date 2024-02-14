@@ -30,8 +30,11 @@
 #define ll long long int
 #define Int unsigned int 
 #define Long unsigned long long int
-#define all(x) x.begin(), x.end()
-#define All(x) x.rbegin(), x.rend()
+#define eliminate(x, y) (x).erase(remove(all(x), (y)), (x).end())
+#define make_unique(x) (x).erase(unique(all(x)), (x).end());
+#define all_range(x) (x).begin(), (x).begin()
+#define All(x) (x).rbegin(), (x).rend()
+#define all(x) (x).begin(), (x).end()
 #define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
@@ -60,112 +63,117 @@ template <typename T>
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
 const int INF = 2e9 + 7;
-const ll INFLL = 9e18 + 7;
+const ll INFL = 9e18 + 7;
 const double EPS = 1e-9;
 
 void FastIO();
 
-struct SegTree {
+template <typename T>
+struct Fenwick {
     int N;
-    vector<int> arr;
-    vector<ll> tree, A, D;
+    vector<T> bit;
+ 
+    Fenwick(int n = 0) : N(n), bit(N + 2, 0) {}
+ 
+    void update(int i, int v) {
+        for(i++; i <= N; i += i & -i) 
+            bit[i] += v;
+    }
+ 
+    T calc(int i) {
+        T sum = 0;
+        for(i++; i > 0; i -= i & -i)
+            sum += bit[i];
+        return sum;
+    }
+ 
+    T calc(int l, int r) {
+        return calc(r) - calc(l - 1);
+    }
+};
 
-    SegTree(int n) : N(n), arr(N), A(4 * N, 0), D(4 * N, 0), tree(4 * N) {}
+struct Centroid {
+    int N, K1, K2, depth;
+    vector<vector<int>> adj;
+    vector<int> sub;
+    vector<bool> vis;
+    Fenwick<int> fenwick;
+    ll ans = 0;
 
-    SegTree(const vector<int> &a) : N(sz(a)), arr(a), tree(4 * N), A(4 * N, 0), D(4 * N, 0) {}
+    Centroid(int n, int k1, int k2) : N(n), K1(k1), K2(k2), fenwick(N),
+                                      adj(N), vis(N, 0), sub(N) {}
 
-    void build(int x, int l, int r) {
-        if(l == r){
-            tree[x] = arr[l];
-            return;
+    void add_edge(int u, int v) {
+        adj[u].pb(v);
+        adj[v].pb(u);
+    }
+
+    int dfs_sub(int u, int p = -1){
+        sub[u] = 1;
+        for(const int &v : adj[u])
+            if(v != p && !vis[v])
+                sub[u] += dfs_sub(v, u);
+        return sub[u];
+    }
+
+    int centroid(int u, int p, int n){
+        for(const int &v : adj[u])
+            if(v != p && !vis[v] && sub[v] > n / 2)
+                return centroid(v, u, n);
+        return u;
+    }
+
+    ll res() {
+        fenwick.update(0, 1);
+        solve();
+        return ans;
+    }
+
+    void solve(int u = 0){
+        int c = centroid(u, -1, dfs_sub(u));
+        vis[c] = 1;
+        depth = 0;
+
+        for(const int &v : adj[c]){
+            if(vis[v]) continue;
+            dfs(v, c, 0);
+            dfs(v, c, 1);
         }
 
-        int m = (l + r) >> 1;
+        for(int d = 1; d <= depth; d++)
+            fenwick.update(d, fenwick.calc(d - 1) - fenwick.calc(d));
 
-        build(2 * x + 1, l, m);
-        build(2 * x + 2, m + 1, r);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        for(const int &v : adj[c])
+            if(!vis[v])
+                solve(v);
     }
 
-    void push(int x, int m) {
-        A[2 * x + 1] += A[x];
-        A[2 * x + 2] += A[x] + m * D[x];
-        D[2 * x + 1] += D[x];
-        D[2 * x + 2] += D[x];
-    }
-
-    void propagate(int x, int l, int r) {
-        if(!A[x])
+    void dfs(int u, int p, bool t, int d = 1){
+        if(d > K2)   
             return;
 
-        tree[x] += (2 * A[x] + (r - l) * D[x]) * (r - l + 1) >> 1;
+        depth = max(depth, d);
+        if(t) fenwick.update(d, 1);
+        else ans += (fenwick.calc(K2 - d) - fenwick.calc(max(0, K1 - d) - 1));
 
-        if(l != r)
-            push(x, (r - l) / 2 + 1);
-
-        A[x] = D[x] = 0;
-    }
-
-    void update(int l, int r, int a, int d) {
-        modify(0, 0, N - 1, l, r, a, d);
-    }
-
-    void modify(int x, int l, int r, int ql, int qr, int a, int d) {
-        propagate(x, l, r);
-
-        if(l > qr || ql > r)
-            return;
-
-        if(ql <= l && r <= qr){
-            A[x] = (a + 1LL * (l - ql) * d), D[x] = d;
-            propagate(x, l, r);
-            return;
-        }
-
-        int m = (l + r) >> 1;
-
-        modify(2 * x + 1, l, m, ql, qr, a, d);
-        modify(2 * x + 2, m + 1, r, ql, qr, a, d);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
-    }
-
-    ll val(int j) {
-        return process(0, 0, N - 1, j);
-    }
-
-    ll process(int x, int l, int r, int j) {
-        propagate(x, l, r);
-
-        if(l == r)
-            return tree[x];
-
-        int m = (l + r) >> 1;
-
-        return (j <= m ? process(2 * x + 1, l, m, j) :
-                         process(2 * x + 2, m + 1, r, j));
+        for(const int &v : adj[u])
+            if(v != p && !vis[v])
+                dfs(v, u, t, d + 1);
     }
 };
 
 int main(){
- 
+
     FastIO();
-    int n,q; cin >> n >> q;
-    SegTree A(n);
+    int n,k1,k2; cin >> n >> k1 >> k2;
+    Centroid tree(n, k1, k2);
 
-    for(int i = 0, t, l, r, a, d, j; i < q; i++){
-        cin >> t;
-
-        if(t == 1){
-            cin >> l >> r >> a >> d;
-            l--, r--;
-            A.update(l, r, a, d);
-        } else {
-            cin >> j, j--;
-            cout << A.val(j) << '\n';
-        }
+    for(int i = 1, u, v; i < n; i++){
+        cin >> u >> v, u--, v--;
+        tree.add_edge(u, v);
     }
+
+    cout << tree.res() << '\n';
 
     return 0;
 }

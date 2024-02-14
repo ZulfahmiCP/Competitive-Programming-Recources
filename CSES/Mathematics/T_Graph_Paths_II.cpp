@@ -30,8 +30,9 @@
 #define ll long long int
 #define Int unsigned int 
 #define Long unsigned long long int
-#define all(x) x.begin(), x.end()
-#define All(x) x.rbegin(), x.rend()
+#define all_range(x) (x).begin(), (x).begin()
+#define All(x) (x).rbegin(), (x).rend()
+#define all(x) (x).begin(), (x).end()
 #define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
@@ -43,9 +44,9 @@ template<class T, class U> using Map = unordered_map<T, U>;
 template <typename T>
     void prd(const T& x);
 template <typename T, typename U>
-    void prd(const pair<T, U>& vue);
+    void prd(const pair<T, U>& value);
 template <typename T, typename... Args>
-    void prd(const T& vue, Args... args);
+    void prd(const T& value, Args... args);
 template <typename... Args>
     void debug(Args... args);
 template <typename K, typename V>
@@ -60,92 +61,73 @@ template <typename T>
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
 const int INF = 2e9 + 7;
-const ll INFLL = 9e18 + 7;
+const ll INFL = 4e18 + 7;
 const double EPS = 1e-9;
 
 void FastIO();
 
-struct node {
-    ll pref, suff, seg, sum;
-};
+struct Matrix {
+    int N, M;
+    vector<vector<ll>> Mat;
 
-struct SegTree {
-    int N;
-    vector<int> arr;
-    vector<node> tree;
-
-    SegTree(int n = 0) : N(n), arr(N), tree(4 * N) {}
-    SegTree(const vector<int> &A) : N(sz(A)), arr(A), tree(4 * N) {
-        build(0, 0, N - 1);
+    Matrix(const vector<vector<int>>& mat) : N(sz(mat)), M(sz(mat[0])) {
+        Mat.resize(N, vector<ll>(M));
+        for(int i = 0; i < N; i++)  
+            for(int j = 0; j < M; j++)
+                Mat[i][j] = mat[i][j];
     }
 
-    node combine(node a, node b) {
-        return node{
-            max(a.pref, a.sum + b.pref),
-            max(b.suff, a.suff + b.sum),
-            max({a.seg, b.seg, a.suff + b.pref}),
-            a.sum + b.sum
-        };
+    Matrix(int n, int m, ll x = 0) : N(n), M(m), Mat(N, vector<ll>(M, x)) {}
+
+    Matrix& operator*=(const Matrix& A) {
+        Matrix product(N, A.M, INFL);
+        assert(M == A.N);
+        for(int i = 0; i < N; i++)
+            for(int j = 0; j < A.M; j++)
+                for(int k = 0; k < M; k++)
+                    product[i][j] = min(product[i][j], Mat[i][k] + A.Mat[k][j]);
+        return *this = product;
     }
 
-    void build(int x, int l, int r) {
-        if(l == r){
-            tree[x] = arr[l] > 0 ? node{arr[l], arr[l], arr[l], arr[l]} : node{0, 0, 0, arr[l]};
-            return;
-        }
+    friend Matrix operator*(const Matrix &a, const Matrix &b) { return Matrix(a) *= b; }
 
-        int m = (l + r) / 2;
-
-        build(2 * x + 1, l, m);
-        build(2 * x + 2, m + 1, r);
-
-        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    friend Matrix power(Matrix A, ll B) {
+        if(B == 1) 
+            return A;
+            
+        Matrix C = power(A, B >> 1);
+        C = C * C;
+        if(B & 1) 
+            C *= A;
+        return C;
     }
 
-    void update(int j, int v){
-        update(0, 0, N - 1, j, v);
-    }
-
-    void update(int x, int l, int r, int j, int v) {
-        if(l == r){
-            tree[x] = v > 0 ? node{v, v, v, v} : node{0, 0, 0, v};
-            return;
-        }
-
-        int m = (l + r) >> 1;
-
-        j <= m ? update(2 * x + 1, l, m, j, v)
-               : update(2 * x + 2, m + 1, r, j, v);
-
-        tree[x] = combine(tree[2 * x + 1], tree[2 * x + 2]);
+    vector<ll>& operator[](int i) {
+        return Mat[i];
     }
 };
 
 int main(){
  
     FastIO();
-    int n,q; cin >> n >> q;
-    vector<int> A(n);
+    int n,m,k; cin >> n >> m >> k;
+    Matrix A(n, n, INFL);
 
-    for(int &a : A)
-        cin >> a;
-    
-    SegTree seg(A);
-
-    cout << seg.tree[0].seg << '\n';
-    for(int i = 0, pos, v; i < q; i++){
-        cin >> pos >> v;
-        seg.update(pos, v);
-        cout << seg.tree[0].seg << '\n';
+    for(int i = 0, u, v, w; i < m; i++){
+        cin >> u >> v >> w, u--, v--;
+        A[u][v] = min(A[u][v], (ll)w);
     }
+
+    auto ans = power(A, k)[0][n - 1];
+    cout << (ans == INFL ? -1 : ans) << '\n';
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
 template <typename T> void prd(const T& x){ cerr << x; }
-template <typename T, typename U>void prd(const pair<T, U>& vue){ cerr << "("; prd(vue.first); cerr << ", "; prd(vue.second); cerr << ")"; }
-template <typename T, typename... Args>void prd(const T& vue, Args... args){prd(vue); cerr << ", "; prd(args...); }
+template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
+template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }
 template <typename... Args> void debug(Args... args){ cerr << "[";  prd(args...); cerr << "]\n"; }
 template <typename K, typename V> void debug(const map<K, V>& cont){ cerr << '['; bool cm = 0; for(auto [k, v] : cont){ if(cm) cerr << ", "; cerr << '['; prd(k); cerr << ", "; prd(v); cerr << ']'; cm = 1; } cerr << "]\n"; }
 template <typename T> void debug(const set<T>& cont) { cerr << '['; bool cm = 0; for (const auto& st : cont) { if (cm) cerr << ", "; prd(st); cm = 1; } cerr << "]\n";}

@@ -4,9 +4,10 @@
 #include <unordered_map>
 #include <algorithm>
 #include <assert.h>
-#include <iomanip>
+#include <climits>
 #include <cstring>
 #include <numeric>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <bitset>
@@ -18,6 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
+
 #define fi first 
 #define se second 
 #define pb push_back
@@ -30,6 +32,8 @@
 #define Long unsigned long long int
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
+#define sz(x) (int)x.size()
+#define newl cerr << '\n'
 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
@@ -55,31 +59,25 @@ template <typename T>
 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
+const int INF = 2e9 + 7;
+const ll INFLL = 9e18 + 7;
+const double EPS = 1e-9;
 
 void FastIO();
-void FreeOpen();
 
 struct SegTree {
     int N;
-    vector<int> A, tree;
+    vector<int> arr, tree;
 
-    SegTree(int n) {
-        N = n;
-        A.resize(N);
-        tree.resize(4 * N);
-    }
-
-    void build() {
-        build(0, 0, N - 1);
-    }
+    SegTree(int n) : N(n), arr(N), tree(4 * N) {}
 
     void build(int x, int l, int r) {
         if(l == r){
-            tree[x] = A[l];
+            tree[x] = arr[l];
             return;
         }
 
-        int m = (l + r) / 2;
+        int m = (l + r) >> 1;
 
         build(2 * x + 1, l, m);
         build(2 * x + 2, m + 1, r);
@@ -87,49 +85,49 @@ struct SegTree {
         tree[x] = max(tree[2 * x + 1], tree[2 * x + 2]);
     }
 
-    void update(int j, int val){
-        update(0, 0, N - 1, j, val);
+    void update(int j, int v){
+        update(0, 0, N - 1, j, v);
     }
 
-    void update(int x, int l, int r, int j, int val) {
+    void update(int x, int l, int r, int j, int v) {
         if(l == r){
-            tree[x] = val;
+            tree[x] = v;
             return;
         }
 
-        int m = (l + r) / 2;
-        j <= m ? update(2 * x + 1, l, m, j, val)
-               : update(2 * x + 2, m + 1, r, j, val);
+        int m = (l + r) >> 1;
+        j <= m ? update(2 * x + 1, l, m, j, v)
+               : update(2 * x + 2, m + 1, r, j, v);
 
         tree[x] = max(tree[2 * x + 1], tree[2 * x + 2]);
     }
 
-    int query(int j, int v) {
-        v = query(0, 0, N - 1, j, v);
-        return v == 1e9 ? -1 : v;
+    int calc(int j, int v) {
+        return process(0, 0, N - 1, j, v);
     }
 
-    int calc(int x, int l, int r, int v) {
+    int query(int x, int l, int r, int v) {
         if(l == r)
             return l;
 
         int m = (l + r) >> 1;
+
         if(tree[2 * x + 1] >= v)
-            return calc(2 * x + 1, l, m, v);
-        return calc(2 * x + 2, m + 1, r, v);
+            return query(2 * x + 1, l, m, v);
+        return query(2 * x + 2, m + 1, r, v);
     }
 
-    int query(int x, int l, int r, int j, int v) {
+    int process(int x, int l, int r, int j, int v) {
         if(r < j)
-            return 1e9;
+            return INF;
+            
         if(l >= j)
-            return tree[x] < v ? 1e9 : calc(x, l, r, v);
+            return tree[x] < v ? INF : query(x, l, r, v);
         
         int m = (l + r) >> 1;
-        return min(
-            query(2 * x + 1, l, m, j, v),
-            query(2 * x + 2, m + 1, r, j, v)
-        );
+
+        return min(process(2 * x + 1, l, m, j, v),
+                   process(2 * x + 2, m + 1, r, j, v));
     }
 };
 
@@ -139,10 +137,10 @@ int main(){
     int n,q; cin >> n >> q;
     SegTree seg(n);
 
-    for(int &a : seg.A)
+    for(int &a : seg.arr)
         cin >> a;
 
-    seg.build();
+    seg.build(0, 0, n - 1);
 
     for(int i = 0, t,j,v; i < q; i++){
         cin >> t;
@@ -152,7 +150,7 @@ int main(){
             seg.update(j, v);
         } else {
             cin >> v >> j;
-            cout << seg.query(j, v) << '\n';
+            cout << seg.calc(j, v) << '\n';
         }
     }
 
@@ -160,7 +158,6 @@ int main(){
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
-void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void prd(const T& x){ cerr << x; }
 template <typename T, typename U>void prd(const pair<T, U>& value){ cerr << "("; prd(value.first); cerr << ", "; prd(value.second); cerr << ")"; }
 template <typename T, typename... Args>void prd(const T& value, Args... args){prd(value); cerr << ", "; prd(args...); }

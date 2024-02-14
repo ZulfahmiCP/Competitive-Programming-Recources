@@ -1,7 +1,5 @@
 #include <iostream>
 #include <functional>
-#include <unordered_set>
-#include <unordered_map>
 #include <algorithm>
 #include <iomanip>
 #include <cstring>
@@ -13,20 +11,14 @@
 #include <queue>
 #include <stack>
 #include <tuple>
-#include <deque>
 #include <set>
 #include <map>
-#define X first 
-#define Y second 
-#define Int int64_t
-#define pb push_back
-#define pf push_front
-#define ld long double
 #define ll long long int
 #define ull unsigned long long int
-#define min_heap priority_queue<int, vector<int>, greater<int>>
+#define ld long double
 #define all(x) x.begin(), x.end()
 #define All(x) x.rbegin(), x.rend()
+#define pb push_back
 #define Map unordered_map
 #define Set unordered_set
 using namespace std;
@@ -48,56 +40,30 @@ template <typename T>
  
 void FastIO();
 void FreeOpen();
-
+void UsacoOpen();
 int main(){
  
     FastIO();
-    int n,k; cin >> n >> k;
-    vector<vector<int>> graph(n);
-    vector<vector<ll>> dp(n, vector<ll>(k + 1, 0));
-    // dp[u][d] represent the number of u v which v is in the subtree of u
-    // which have distance of exactly d
+    int t,n; cin >> t;
+    while(t--){
+        cin >> n;
+        vector<int> A(n + 1), model(n + 1, 1);
 
-    for(int i = 1, u,v; i < n; i++){
-        cin >> u >> v;
-        graph[--u].pb(--v);
-        graph[v].pb(u);
+        for(int i = 1; i <= n; i++)
+            cin >> A[i];
+
+        for(int i = 1; i <= n; i++)
+            for(int j = 2*i ; j <= n; j += i)
+                if(A[i] < A[j])
+                    model[j] = max(model[j], model[i] + 1);
+        
+        cout << *max_element(all(model)) << '\n';
     }
-
-    ll ans = 0, total;
-    function<void(int, int)> explore = [&](int u, int p) -> void {
-        dp[u][0] = 1;
-
-        for(int &v : graph[u]) if(v != p) {
-            explore(v, u);
-
-            for(int i = 1; i <= k; i++)
-                dp[u][i] += dp[v][i - 1];
-        }
-
-        ans += dp[u][k], total = 0;
-
-        for(int &v : graph[u]) if(v != p) {
-            for(int i = 1; i < k; i++)
-                total += dp[v][i - 1] * (dp[u][k - i] - dp[v][k - i - 1]);
-            // this was count the number of vertices in the subtree of u 
-            // which have distance of k. which is if for every vertices who have
-            // distance of i times the other child of u who have distance of k - i
-            // Because i + k - i = k, and we subtract dp[v][k - i - 1], cause
-            // we just wanna count from the distance other than v
-        }
-
-        ans += total/2;
-    };
-
-    explore(0, -1);
-    cout << ans << '\n';
 
     return 0;
 }
  
 void FastIO(){ ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0); }
-void FreeOpen(){ freopen("input.txt", "r", stdin); freopen("output.txt", "c", stdout); }
 template <typename T> void printDebug(const T& x){ cout << x; }
 template <typename T, typename U>void printDebug(const pair<T, U>& value){ cout << "("; printDebug(value.first); cout << ", "; printDebug(value.second); cout << ")"; }
 template <typename T, typename... Args>void printDebug(const T& value, Args... args){printDebug(value); cout << ", "; printDebug(args...); }

@@ -19,7 +19,7 @@
 #include <deque>
 #include <set>
 #include <map>
-
+ 
 #define fi first 
 #define se second 
 #define pb push_back
@@ -34,7 +34,7 @@
 #define All(x) x.rbegin(), x.rend()
 #define sz(x) (int)x.size()
 #define newl cerr << '\n'
-
+ 
 using namespace std;
 template<class T> using Set = unordered_set<T>;
 template<class T> using min_heap = priority_queue<T, vector<T>, greater<T>>;  
@@ -56,117 +56,124 @@ template <typename T>
     void debug(const vector<T>& cont);
 template <typename T>
     void debug(const vector<vector<T>> &cont);
-
+ 
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
 const int INF = 2e9 + 7;
 const ll INFLL = 9e18 + 7;
 const double EPS = 1e-9;
-
+ 
 void FastIO();
+ 
+struct HLD {
+    int N, root, cnt;
+    vector<vector<int>> adj;
+    vector<int> value, pos, head;
+    vector<int> depth, sub, parent, seg;
+ 
+    HLD(int n) : N(n), cnt(0), sub(N, 1), pos(N), head(N), seg(1e6 + 5, 0),
+                 adj(N), depth(N), value(N), parent(N) {}
+ 
+    void add_edge(int u, int v) {
+        adj[u].pb(v);
+        adj[v].pb(u);
+    }
+ 
+    void modify(int i, int v) {
+        i += N; seg[i] = v; 
+		for(i >>= 1; i > 0; i >>= 1)
+			seg[i] = max(seg[2 * i], seg[2 * i + 1]);
+    }
+ 
+    int process(int l, int r) {
+        int ans = 0;
+        for(l += N, r += N; l <= r; l >>= 1, r >>= 1) {
+			if(l & 1)
+				ans = max(ans, seg[l++]);
+			if(~r & 1)
+				ans = max(ans, seg[r--]);
+        }
+        return ans;
+    }
+ 
+    void build(int rt = 0) {
+        root = rt;
+        depth[root] = parent[root] = 0;
+        dfs_sub(0);
+        dfs_hld(0, 0);
+    }
+ 
+    int dfs_sub(int u) {
+		adj[u].erase(remove(all(adj[u]), parent[u]), adj[u].end());
 
-struct SegTree {
-    int N;
-    vector<int> arr;
-    vector<ll> tree, A, D;
-
-    SegTree(int n) : N(n), arr(N), A(4 * N, 0), D(4 * N, 0), tree(4 * N) {}
-
-    SegTree(const vector<int> &a) : N(sz(a)), arr(a), tree(4 * N), A(4 * N, 0), D(4 * N, 0) {}
-
-    void build(int x, int l, int r) {
-        if(l == r){
-            tree[x] = arr[l];
-            return;
+        for(const int &v : adj[u]){
+            depth[v] = depth[u] + 1;
+            parent[v] = u;
+            sub[u] += dfs_sub(v);
         }
 
-        int m = (l + r) >> 1;
+		sort(all(adj[u]), [&](int &a, int &b) {
+			return sub[a] > sub[b];
+		});
 
-        build(2 * x + 1, l, m);
-        build(2 * x + 2, m + 1, r);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        return sub[u];
     }
+ 
+    void dfs_hld(int u, bool heavy) {
+        pos[u] = cnt++;
+        head[u] = heavy ? head[parent[u]] : u;
+        modify(pos[u], value[u]);
+		bool heavy_child = 1;
 
-    void push(int x, int m) {
-        A[2 * x + 1] += A[x];
-        A[2 * x + 2] += A[x] + m * D[x];
-        D[2 * x + 1] += D[x];
-        D[2 * x + 2] += D[x];
+		for(const int &v : adj[u]){
+			dfs_hld(v, heavy_child);
+			heavy_child = 0;
+		}
     }
-
-    void propagate(int x, int l, int r) {
-        if(!A[x])
-            return;
-
-        tree[x] += (2 * A[x] + (r - l) * D[x]) * (r - l + 1) >> 1;
-
-        if(l != r)
-            push(x, (r - l) / 2 + 1);
-
-        A[x] = D[x] = 0;
-    }
-
-    void update(int l, int r, int a, int d) {
-        modify(0, 0, N - 1, l, r, a, d);
-    }
-
-    void modify(int x, int l, int r, int ql, int qr, int a, int d) {
-        propagate(x, l, r);
-
-        if(l > qr || ql > r)
-            return;
-
-        if(ql <= l && r <= qr){
-            A[x] = (a + 1LL * (l - ql) * d), D[x] = d;
-            propagate(x, l, r);
-            return;
+ 
+    int calc(int u, int v) {
+        int res = 0;
+        for(;head[u] != head[v]; u = parent[head[u]]){
+            if(depth[head[u]] < depth[head[v]])
+                swap(u, v);
+            res = max(res, process(pos[head[u]], pos[u]));
         }
-
-        int m = (l + r) >> 1;
-
-        modify(2 * x + 1, l, m, ql, qr, a, d);
-        modify(2 * x + 2, m + 1, r, ql, qr, a, d);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+ 
+        if(depth[u] > depth[v])
+            swap(u, v);
+        res = max(res, process(pos[u], pos[v]));
+        return res;
     }
-
-    ll val(int j) {
-        return process(0, 0, N - 1, j);
+ 
+    void update(int u, int x) {
+        value[u] = x;
+        modify(pos[u], x);
     }
-
-    ll process(int x, int l, int r, int j) {
-        propagate(x, l, r);
-
-        if(l == r)
-            return tree[x];
-
-        int m = (l + r) >> 1;
-
-        return (j <= m ? process(2 * x + 1, l, m, j) :
-                         process(2 * x + 2, m + 1, r, j));
-    }
-};
-
+};  
+ 
 int main(){
  
     FastIO();
     int n,q; cin >> n >> q;
-    SegTree A(n);
-
-    for(int i = 0, t, l, r, a, d, j; i < q; i++){
-        cin >> t;
-
-        if(t == 1){
-            cin >> l >> r >> a >> d;
-            l--, r--;
-            A.update(l, r, a, d);
-        } else {
-            cin >> j, j--;
-            cout << A.val(j) << '\n';
-        }
+    HLD tree(n);
+ 
+    for(int &a : tree.value)
+        cin >> a;
+ 
+    for(int i = 1, u, v; i < n; i++){
+        cin >> u >> v, u--, v--;
+        tree.add_edge(u, v);
+    }   
+    
+    tree.build();
+ 
+    for(int i = 0, t, u, v; i < q; i++){
+        cin >> t >> u >> v, u--;
+ 
+        if(t == 1) tree.update(u, v);
+        else cout << tree.calc(u, --v) << ' ';
     }
-
+ 
     return 0;
 }
  

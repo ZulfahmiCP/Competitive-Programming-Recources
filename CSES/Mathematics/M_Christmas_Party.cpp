@@ -30,8 +30,9 @@
 #define ll long long int
 #define Int unsigned int 
 #define Long unsigned long long int
-#define all(x) x.begin(), x.end()
-#define All(x) x.rbegin(), x.rend()
+#define all_range(x) (x).begin(), (x).begin()
+#define All(x) (x).rbegin(), (x).rend()
+#define all(x) (x).begin(), (x).end()
 #define sz(x) (int)x.size()
 #define newl cerr << '\n'
 
@@ -60,112 +61,70 @@ template <typename T>
 const int MOD = 1e9 + 7;
 const int mod = 998244353;
 const int INF = 2e9 + 7;
-const ll INFLL = 9e18 + 7;
+const ll INFL = 9e18 + 7;
 const double EPS = 1e-9;
 
 void FastIO();
 
-struct SegTree {
+template<const int &M = MOD>
+struct mod_int {
+    int val;
+
+    mod_int(ll v = 0) {if(v < 0) v = v % M + M; if(v >= M) v %= M; val = v;}
+
+    friend mod_int power(mod_int a, ll b){mod_int c(1);for(;b > 0;a *= a,b >>= 1)if(b & 1)c *= a;return c;}
+    friend mod_int power(const mod_int &a, const mod_int b){return power(a, b.val);}
+    friend mod_int inverse(const mod_int &a){return power(a, M - 2);}
+
+    mod_int& operator+=(const mod_int &b){val += b.val; if (val >= M) val -= M; return *this;}
+    mod_int& operator-=(const mod_int &b){val -= b.val; if (val < 0) val += M; return *this;}
+    mod_int& operator*=(const mod_int &b){val = (ll)val * b.val % M; return *this;}
+    mod_int& operator/=(const mod_int &b){return *this *= inv(b);}
+    mod_int& operator++(){val = val == M - 1 ? 0 : val + 1; return *this;}
+    mod_int& operator--(){val = val == 0 ? M - 1 : val - 1; return *this;}
+    mod_int operator++(int){mod_int a = *this; ++*this; return a;}
+    mod_int operator--(int){mod_int a = *this; --*this; return a;}
+
+    friend mod_int operator-(const mod_int &a){return 0 - a;}
+    friend mod_int operator+(const mod_int &a, const mod_int &b){return mod_int(a) += b;}
+    friend mod_int operator-(const mod_int &a, const mod_int &b){return mod_int(a) -= b;}
+    friend mod_int operator*(const mod_int &a, const mod_int &b){return mod_int(a) *= b;}
+    friend mod_int operator/(const mod_int &a, const mod_int &b){return mod_int(a) /= b;}
+    
+    friend bool operator==(const mod_int &a, const mod_int &b){return a.val == b.val;}
+    friend bool operator!=(const mod_int &a, const mod_int &b){return a.val != b.val;}
+    friend bool operator>=(const mod_int &a, const mod_int &b){return a.val >= b.val;}
+    friend bool operator<=(const mod_int &a, const mod_int &b){return a.val <= b.val;}
+    friend bool operator>(const mod_int &a, const mod_int &b){return a.val > b.val;}
+    friend bool operator<(const mod_int &a, const mod_int &b){return a.val < b.val;}
+    
+    friend std::ostream& operator<<(std::ostream& os, const mod_int &a){return os << a.val;}
+    friend std::istream& operator>>(std::istream& is, mod_int &a){return is >> a.val;}
+};
+using mint = mod_int<>;
+
+struct Dearangement {
     int N;
-    vector<int> arr;
-    vector<ll> tree, A, D;
+    vector<mint> D;
 
-    SegTree(int n) : N(n), arr(N), A(4 * N, 0), D(4 * N, 0), tree(4 * N) {}
-
-    SegTree(const vector<int> &a) : N(sz(a)), arr(a), tree(4 * N), A(4 * N, 0), D(4 * N, 0) {}
-
-    void build(int x, int l, int r) {
-        if(l == r){
-            tree[x] = arr[l];
-            return;
-        }
-
-        int m = (l + r) >> 1;
-
-        build(2 * x + 1, l, m);
-        build(2 * x + 2, m + 1, r);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+    Dearangement(int n) : N(n), D(N + 1) {
+        D[1] = 0, D[2] = 1;
+        for(int i = 3; i <= N; i++)
+            D[i] = (D[i - 1] + D[i - 2]) * (i - 1);
     }
 
-    void push(int x, int m) {
-        A[2 * x + 1] += A[x];
-        A[2 * x + 2] += A[x] + m * D[x];
-        D[2 * x + 1] += D[x];
-        D[2 * x + 2] += D[x];
-    }
-
-    void propagate(int x, int l, int r) {
-        if(!A[x])
-            return;
-
-        tree[x] += (2 * A[x] + (r - l) * D[x]) * (r - l + 1) >> 1;
-
-        if(l != r)
-            push(x, (r - l) / 2 + 1);
-
-        A[x] = D[x] = 0;
-    }
-
-    void update(int l, int r, int a, int d) {
-        modify(0, 0, N - 1, l, r, a, d);
-    }
-
-    void modify(int x, int l, int r, int ql, int qr, int a, int d) {
-        propagate(x, l, r);
-
-        if(l > qr || ql > r)
-            return;
-
-        if(ql <= l && r <= qr){
-            A[x] = (a + 1LL * (l - ql) * d), D[x] = d;
-            propagate(x, l, r);
-            return;
-        }
-
-        int m = (l + r) >> 1;
-
-        modify(2 * x + 1, l, m, ql, qr, a, d);
-        modify(2 * x + 2, m + 1, r, ql, qr, a, d);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
-    }
-
-    ll val(int j) {
-        return process(0, 0, N - 1, j);
-    }
-
-    ll process(int x, int l, int r, int j) {
-        propagate(x, l, r);
-
-        if(l == r)
-            return tree[x];
-
-        int m = (l + r) >> 1;
-
-        return (j <= m ? process(2 * x + 1, l, m, j) :
-                         process(2 * x + 2, m + 1, r, j));
+    mint& operator[](int i) {
+        assert(0 <= i && i < sz(D));
+        return D[i];
     }
 };
 
 int main(){
  
     FastIO();
-    int n,q; cin >> n >> q;
-    SegTree A(n);
-
-    for(int i = 0, t, l, r, a, d, j; i < q; i++){
-        cin >> t;
-
-        if(t == 1){
-            cin >> l >> r >> a >> d;
-            l--, r--;
-            A.update(l, r, a, d);
-        } else {
-            cin >> j, j--;
-            cout << A.val(j) << '\n';
-        }
-    }
+    int n; cin >> n;
+    Dearangement D(n);
+    cout << D[n] << '\n';
 
     return 0;
 }

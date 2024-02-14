@@ -82,6 +82,7 @@ struct Matrix {
                     if(product.Mat[i][j] > MOD)
                         product.Mat[i][j] -= MOD;
                 }
+        debug(product.Mat);cerr << '\n';
         return product;
     }
 

@@ -65,18 +65,20 @@ const double EPS = 1e-9;
 
 void FastIO();
 
-struct SegTree {
+struct MergeSortTree {
     int N;
     vector<int> arr;
-    vector<ll> tree, A, D;
+    vector<vector<int>> tree;
 
-    SegTree(int n) : N(n), arr(N), A(4 * N, 0), D(4 * N, 0), tree(4 * N) {}
+    MergeSortTree(int n = 0) : N(n), arr(N), tree(4 * N) {}
 
-    SegTree(const vector<int> &a) : N(sz(a)), arr(a), tree(4 * N), A(4 * N, 0), D(4 * N, 0) {}
+    void pull(int x) {
+        merge(all(tree[2 * x + 1]), all(tree[2 * x + 2]), back_inserter(tree[x]));
+    } 
 
     void build(int x, int l, int r) {
-        if(l == r){
-            tree[x] = arr[l];
+        if (l == r) {
+            tree[x] = {arr[l]};
             return;
         }
 
@@ -84,89 +86,120 @@ struct SegTree {
 
         build(2 * x + 1, l, m);
         build(2 * x + 2, m + 1, r);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
+        pull(x);
     }
 
-    void push(int x, int m) {
-        A[2 * x + 1] += A[x];
-        A[2 * x + 2] += A[x] + m * D[x];
-        D[2 * x + 1] += D[x];
-        D[2 * x + 2] += D[x];
+    int calc(int l, int r, int v) {
+        return process(0, 0, N - 1, l, r, v);
     }
 
-    void propagate(int x, int l, int r) {
-        if(!A[x])
-            return;
-
-        tree[x] += (2 * A[x] + (r - l) * D[x]) * (r - l + 1) >> 1;
-
-        if(l != r)
-            push(x, (r - l) / 2 + 1);
-
-        A[x] = D[x] = 0;
-    }
-
-    void update(int l, int r, int a, int d) {
-        modify(0, 0, N - 1, l, r, a, d);
-    }
-
-    void modify(int x, int l, int r, int ql, int qr, int a, int d) {
-        propagate(x, l, r);
-
+    int process(int x, int l, int r, int ql, int qr, int v) {
         if(l > qr || ql > r)
-            return;
-
+            return INF;
+        
         if(ql <= l && r <= qr){
-            A[x] = (a + 1LL * (l - ql) * d), D[x] = d;
-            propagate(x, l, r);
-            return;
+            auto pos = upper_bound(all(tree[x]), v);
+            return pos == tree[x].end() ? INF : *pos;
         }
 
         int m = (l + r) >> 1;
 
-        modify(2 * x + 1, l, m, ql, qr, a, d);
-        modify(2 * x + 2, m + 1, r, ql, qr, a, d);
-
-        tree[x] = tree[2 * x + 1] + tree[2 * x + 2];
-    }
-
-    ll val(int j) {
-        return process(0, 0, N - 1, j);
-    }
-
-    ll process(int x, int l, int r, int j) {
-        propagate(x, l, r);
-
-        if(l == r)
-            return tree[x];
-
-        int m = (l + r) >> 1;
-
-        return (j <= m ? process(2 * x + 1, l, m, j) :
-                         process(2 * x + 2, m + 1, r, j));
+        return min(process(2 * x + 1, l, m, ql, qr, v),
+                   process(2 * x + 2, m + 1, r, ql, qr, v));
     }
 };
 
+struct HLD {
+    int N, root, cnt;
+    vector<vector<int>> adj;
+    vector<int> value, pos, head;
+    vector<int> depth, sub, parent;
+    MergeSortTree seg;
+ 
+    HLD(int n) : N(n), cnt(0), sub(N, 1), pos(N), head(N),
+                 adj(N), depth(N), value(N), parent(N), seg(N) {}
+ 
+    void add_edge(int u, int v) {
+        adj[u].pb(v);
+        adj[v].pb(u);
+    }
+ 
+    void build(int rt = 0) {
+        root = rt;
+        depth[root] = parent[root] = 0;
+        dfs_sub(0); 
+        dfs_hld(0, 0);
+
+        for(int u = 0; u < N; u++)
+            seg.arr[pos[u]] = value[u];
+        seg.build(0, 0, N - 1);
+    }
+ 
+    int dfs_sub(int u) {
+		adj[u].erase(remove(all(adj[u]), parent[u]), adj[u].end());
+
+        for(const int &v : adj[u]){
+            depth[v] = depth[u] + 1;
+            parent[v] = u;
+            sub[u] += dfs_sub(v);
+        }
+
+		sort(all(adj[u]), [&](int &a, int &b) {
+			return sub[a] > sub[b];
+		});
+
+        return sub[u];
+    }
+ 
+    void dfs_hld(int u, bool heavy) {
+        pos[u] = cnt++;
+        head[u] = heavy ? head[parent[u]] : u;
+		bool heavy_child = 1;
+
+		for(const int &v : adj[u]){
+			dfs_hld(v, heavy_child);
+			heavy_child = 0;
+		}
+    }
+ 
+    int calc(int u, int v, int x) {
+        int res = INF;
+
+        for(;head[u] != head[v]; u = parent[head[u]]){
+            if(depth[head[u]] < depth[head[v]])
+                swap(u, v);
+            res = min(res, seg.calc(pos[head[u]], pos[u], x));
+        }
+ 
+        if(depth[u] > depth[v])
+            swap(u, v);
+            
+        res = min(res, seg.calc(pos[u], pos[v], x));
+        return res == INF ? -1 : res;
+    }
+};  
+ 
 int main(){
  
     FastIO();
     int n,q; cin >> n >> q;
-    SegTree A(n);
-
-    for(int i = 0, t, l, r, a, d, j; i < q; i++){
-        cin >> t;
-
-        if(t == 1){
-            cin >> l >> r >> a >> d;
-            l--, r--;
-            A.update(l, r, a, d);
-        } else {
-            cin >> j, j--;
-            cout << A.val(j) << '\n';
-        }
+    HLD tree(n);
+ 
+    for(int &a : tree.value)
+        cin >> a;
+ 
+    for(int i = 1, u, v; i < n; i++){
+        cin >> u >> v, u--, v--;
+        tree.add_edge(u, v);
+    }   
+    
+    tree.build();
+ 
+    for(int i = 0, u, v, x; i < q; i++){
+        cin >> u >> v >> x, u--, v--;
+        cout << tree.calc(u, v, x) << '\n';
     }
-
+ 
     return 0;
 }
  
